@@ -13,6 +13,7 @@ var DB *gorm.DB
 
 func Connect()  {
 	
+	// Read DB config from environment variables
 	dsn:= fmt.Sprintf(
 		"host=%s user=%s password=%s dbname=%s port=%s sslmode=%s",
 		os.Getenv("DB_HOST"),
