@@ -11,10 +11,10 @@ import (
 
 var DB *gorm.DB
 
-func Connect()  {
-	
+func Connect() {
+
 	// Read DB config from environment variables
-	dsn:= fmt.Sprintf(
+	dsn := fmt.Sprintf(
 		"host=%s user=%s password=%s dbname=%s port=%s sslmode=%s",
 		os.Getenv("DB_HOST"),
 		os.Getenv("DB_USER"),
@@ -24,9 +24,9 @@ func Connect()  {
 		os.Getenv("DB_SSLMODE"),
 	)
 
-	db,err := gorm.Open(postgres.Open(dsn),&gorm.Config{})
-	if err!= nil{
-		log.Fatal("Failed to connect to the database:",err)
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	if err != nil {
+		log.Fatal("Failed to connect to the database:", err)
 	}
 
 	DB = db
