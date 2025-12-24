@@ -11,13 +11,14 @@ import (
 func main() {
 	config.LoadEnv() //load environment variables at application startup using a config layer
 	database.Connect()
+	database.Migrate()
 
 	r := gin.Default()
 
 	r.GET("health", func(ctx *gin.Context) {
 		ctx.JSON(200, gin.H{
 			"status": "ok",
-			"db":     "connected",
+			"db":     "migrated",
 		})
 	})
 

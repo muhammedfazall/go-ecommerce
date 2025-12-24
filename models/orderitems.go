@@ -8,6 +8,6 @@ type OrderItem struct {
 	Quantity  int     `gorm:"not null"`
 	Price     float64 `gorm:"not null"`
 
-	Order   Order   `gorm:"foreignKey:OrderID;constraint:OnDelete:CASCADE"`
-	Sneaker Sneaker `gorm:"foreignKey:SneakerID"`
+	Order   Order   `gorm:"foreignKey:OrderID;references:ID;constraint:OnDelete:CASCADE"`
+	Sneaker Sneaker `gorm:"foreignKey:SneakerID;references:ID"`
 }

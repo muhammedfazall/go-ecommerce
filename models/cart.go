@@ -7,6 +7,6 @@ type Cart struct {
 	SneakerID uint `gorm:"not null;index"`
 	Quantity  int  `gorm:"not null;check:quantity > 0"`
 
-	User    User    `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE"`
-	Sneaker Sneaker `gorm:"foreignKey:SneakerID;constraint:OnDelete:CASCADE"`
+	User    User    `gorm:"foreignKey:UserID;references:ID;constraint:OnDelete:CASCADE"`
+	Sneaker Sneaker `gorm:"foreignKey:SneakerID;references:ID;constraint:OnDelete:CASCADE"`
 }

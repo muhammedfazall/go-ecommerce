@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/muhammedfazall/go-ecommerce/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -31,4 +32,19 @@ func Connect() {
 
 	DB = db
 	log.Println("Connected to PostgreSQL database")
+}
+
+func Migrate() {
+	err := DB.AutoMigrate(
+		&models.User{}, 
+		&models.Sneaker{},
+		&models.Cart{}, 
+		&models.Order{}, 
+		&models.OrderItem{},
+	)
+	if err != nil {
+		log.Fatal("Migration Failed", err)
+	}
+
+	log.Println("Database migration completed")
 }
