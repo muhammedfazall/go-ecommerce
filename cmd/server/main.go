@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/muhammedfazall/go-ecommerce/config"
 	"github.com/muhammedfazall/go-ecommerce/database"
+	"github.com/muhammedfazall/go-ecommerce/routes"
 )
 
 func main() {
@@ -15,12 +16,8 @@ func main() {
 
 	r := gin.Default()
 
-	r.GET("health", func(ctx *gin.Context) {
-		ctx.JSON(200, gin.H{
-			"status": "ok",
-			"db":     "migrated",
-		})
-	})
+
+	routes.RegisterRoutes(r)
 
 	log.Println("Server running on :8080")
 	r.Run(":8080")
