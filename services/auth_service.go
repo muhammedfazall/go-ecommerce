@@ -36,3 +36,20 @@ func RegisterUser(name, email, password string) error {
 
 	return database.DB.Create(&user).Error
 }
+
+func LoginUser(email,password string) (*models.User,error) {
+	var user models.User
+
+	err := database.DB.Where("email = ?",email).First(&user).Error
+	if err != nil{
+		if errors.Is(err,gorm.ErrRecordNotFound){
+			return nil,errors.New("invalid email or password")
+		}
+		return nil,err
+	}
+
+	if err := utils.CheckPassword(user.Password,password);err != nil{
+		return nil, errors.New("invalid email or password")
+	}
+	return &user, nil
+}
