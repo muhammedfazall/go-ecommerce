@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/muhammedfazall/go-ecommerce/services"
+	utils "github.com/muhammedfazall/go-ecommerce/utils/jwt"
 )
 
 type RegisterRequest struct {
@@ -71,13 +72,30 @@ func Login(c *gin.Context) {
 		return
 	}
 
+	// c.JSON(http.StatusOK,gin.H{
+	// 	"message":"login successful",
+	// 	"user":gin.H{
+	// 		"id":user.ID,
+	// 		"name":user.Name,
+	// 		"email":user.Email,
+	// 		"role":user.Role,
+	// 	},
+	// })
+
+	token,err := utils.GenerateAccessToken(
+		user.ID,
+		user.Email,
+		user.Role,
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError,gin.H{
+			"error":"could not generate token",
+		})
+		return
+	}
+
 	c.JSON(http.StatusOK,gin.H{
-		"message":"login successful",
-		"user":gin.H{
-			"id":user.ID,
-			"name":user.Name,
-			"email":user.Email,
-			"role":user.Role,
-		},
+		"message":"login successfull",
+		"access_token": token,
 	})
 }

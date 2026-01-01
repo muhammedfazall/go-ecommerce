@@ -1,7 +1,3 @@
-// Load .env at app startup
-
-// Fail fast if .env is missing
-
 package config
 
 import (
@@ -10,7 +6,8 @@ import (
 	"github.com/joho/godotenv"
 )
 
-func LoadEnv()  {
+// Load .env at app startup
+func LoadEnv() {
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")

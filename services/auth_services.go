@@ -5,7 +5,7 @@ import (
 
 	"github.com/muhammedfazall/go-ecommerce/database"
 	"github.com/muhammedfazall/go-ecommerce/models"
-	"github.com/muhammedfazall/go-ecommerce/utils"
+	"github.com/muhammedfazall/go-ecommerce/helpers"
 	"gorm.io/gorm"
 )
 
@@ -18,11 +18,11 @@ func RegisterUser(name, email, password string) error {
 		return errors.New("user already exists")
 	}
 
-	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+	if !errors.Is(err, gorm.ErrRecordNotFound) {
 		return err
 	}
 
-	hashedPassword,err := utils.HashPassword(password)
+	hashedPassword,err := helpers.HashPassword(password)
 	if err != nil{
 		return err
 	}
@@ -48,7 +48,7 @@ func LoginUser(email,password string) (*models.User,error) {
 		return nil,err
 	}
 
-	if err := utils.CheckPassword(user.Password,password);err != nil{
+	if err := helpers.CheckPassword(user.Password,password);err != nil{
 		return nil, errors.New("invalid email or password")
 	}
 	return &user, nil

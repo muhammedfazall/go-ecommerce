@@ -10,9 +10,9 @@ import (
 )
 
 func main() {
-	config.LoadEnv() //load environment variables at application startup using a config layer
-	database.Connect()
-	database.Migrate()
+	config.LoadEnv() //load environment variables
+	database.Connect() //connecting to database
+	database.Migrate() //auto migrations
 
 	r := gin.Default()
 
