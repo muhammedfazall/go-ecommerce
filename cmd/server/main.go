@@ -5,8 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/muhammedfazall/go-ecommerce/config"
-	"github.com/muhammedfazall/go-ecommerce/database"
-	"github.com/muhammedfazall/go-ecommerce/routes"
+	"github.com/muhammedfazall/go-ecommerce/internal/database"
+	"github.com/muhammedfazall/go-ecommerce/internal/routes"
 )
 
 func main() {
@@ -16,6 +16,7 @@ func main() {
 
 	r := gin.Default()
 
+	r.LoadHTMLGlob("web/*.html")
 
 	routes.RegisterRoutes(r)
 

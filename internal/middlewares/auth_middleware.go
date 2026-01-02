@@ -2,11 +2,10 @@ package middlewares
 
 import (
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v5"
+	utils "github.com/muhammedfazall/go-ecommerce/utils/jwt"
 )
 
 func AuthMiddleware() gin.HandlerFunc {
@@ -28,29 +27,18 @@ func AuthMiddleware() gin.HandlerFunc {
 		}
 
 		tokenString := parts[1]
-		secret := []byte(os.Getenv("JWT_SECRET"))
 
-		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, jwt.ErrSignatureInvalid
-			}
-			return secret, nil
-		})
-
-		if err != nil || !token.Valid {
+		claims, err := utils.ValidateToken(tokenString)
+		if err != nil {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-				"error": "invalid or expired token",
+				"error": "invalid token",
 			})
 			return
 		}
 
-		claims, ok := token.Claims.(jwt.MapClaims)
-		if !ok {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-				"error": "invalid token claims",
-			})
-			return
-		}
+		// if claims["role"] == "admin" {
+		// 	c.SetCookie("access_token",token,)
+		// }
 
 		// Attach claims to context
 		c.Set("user_id", claims["user_id"])

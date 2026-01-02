@@ -5,7 +5,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/muhammedfazall/go-ecommerce/models"
+	"github.com/muhammedfazall/go-ecommerce/internal/models"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -32,14 +33,15 @@ func Connect() {
 
 	DB = db
 	log.Println("Connected to PostgreSQL database")
+	SeedAdmin(db)
 }
 
 func Migrate() {
 	err := DB.AutoMigrate(
-		&models.User{}, 
+		&models.User{},
 		&models.Sneaker{},
-		&models.Cart{}, 
-		&models.Order{}, 
+		&models.Cart{},
+		&models.Order{},
 		&models.OrderItem{},
 	)
 	if err != nil {
@@ -47,4 +49,16 @@ func Migrate() {
 	}
 
 	log.Println("Database migration completed")
+}
+
+func SeedAdmin(db *gorm.DB) {
+	hash, _ := bcrypt.GenerateFromPassword([]byte("0000"), bcrypt.DefaultCost)
+	db.FirstOrCreate(&models.User{
+		Username:  "superadmin",
+		Email:     "admin@sneacave.com",
+		Password:  string(hash),
+		Role:      "admin",
+		Status:    "active",
+		IsBlocked: false,
+	}, models.User{Email: "admin@sneacave.com"})
 }

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin Dashboard | Sneacave</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 min-h-screen flex">
+
+  <!-- Sidebar -->
+  <aside class="w-64 bg-black text-white flex flex-col">
+    <div class="p-6 text-xl font-bold border-b border-gray-700">
+      Sneacave Admin
+    </div>
+
+    <nav class="flex-1 p-4 space-y-2">
+      <a href="#" class="block px-4 py-2 rounded bg-gray-800">Dashboard</a>
+      <a href="#" class="block px-4 py-2 rounded hover:bg-gray-800">Sneakers</a>
+      <a href="#" class="block px-4 py-2 rounded hover:bg-gray-800">Orders</a>
+      <a href="#" class="block px-4 py-2 rounded hover:bg-gray-800">Users</a>
+    </nav>
+
+    <div class="p-4 border-t border-gray-700">
+      <button class="w-full text-left px-4 py-2 rounded hover:bg-red-600">
+        Logout
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="flex-1 p-6">
+
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-2xl font-bold text-gray-800">
+        Dashboard
+      </h1>
+      <span class="text-sm text-gray-500">
+        Welcome, Admin
+      </span>
+    </div>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+
+      <div class="bg-white p-5 rounded shadow">
+        <p class="text-sm text-gray-500">Total Users</p>
+        <p class="text-2xl font-bold">1,245</p>
+      </div>
+
+      <div class="bg-white p-5 rounded shadow">
+        <p class="text-sm text-gray-500">Sneakers</p>
+        <p class="text-2xl font-bold">87</p>
+      </div>
+
+      <div class="bg-white p-5 rounded shadow">
+        <p class="text-sm text-gray-500">Orders</p>
+        <p class="text-2xl font-bold">342</p>
+      </div>
+
+      <div class="bg-white p-5 rounded shadow">
+        <p class="text-sm text-gray-500">Pending Orders</p>
+        <p class="text-2xl font-bold text-orange-600">18</p>
+      </div>
+
+    </div>
+
+    <!-- Sneakers Table -->
+    <div class="bg-white rounded shadow mb-8">
+      <div class="p-4 border-b font-semibold">
+        Latest Sneakers
+      </div>
+
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 text-left">
+          <tr>
+            <th class="p-3">Name</th>
+            <th class="p-3">Brand</th>
+            <th class="p-3">Price</th>
+            <th class="p-3">Stock</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="border-t">
+            <td class="p-3">Air Jordan 1</td>
+            <td class="p-3">Nike</td>
+            <td class="p-3">$180</td>
+            <td class="p-3 text-green-600">24</td>
+          </tr>
+          <tr class="border-t">
+            <td class="p-3">Yeezy Boost 350</td>
+            <td class="p-3">Adidas</td>
+            <td class="p-3">$220</td>
+            <td class="p-3 text-red-600">0</td>
+          </tr>
+          <tr class="border-t">
+            <td class="p-3">Chuck Taylor</td>
+            <td class="p-3">Converse</td>
+            <td class="p-3">$75</td>
+            <td class="p-3 text-green-600">112</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Orders Table -->
+    <div class="bg-white rounded shadow">
+      <div class="p-4 border-b font-semibold">
+        Recent Orders
+      </div>
+
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 text-left">
+          <tr>
+            <th class="p-3">Order ID</th>
+            <th class="p-3">User</th>
+            <th class="p-3">Total</th>
+            <th class="p-3">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="border-t">
+            <td class="p-3">#ORD1023</td>
+            <td class="p-3">fazal</td>
+            <td class="p-3">$420</td>
+            <td class="p-3 text-orange-600">Pending</td>
+          </tr>
+          <tr class="border-t">
+            <td class="p-3">#ORD1022</td>
+            <td class="p-3">arjun</td>
+            <td class="p-3">$180</td>
+            <td class="p-3 text-green-600">Completed</td>
+          </tr>
+          <tr class="border-t">
+            <td class="p-3">#ORD1021</td>
+            <td class="p-3">rahul</td>
+            <td class="p-3">$75</td>
+            <td class="p-3 text-green-600">Completed</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </main>
+
+</body>
+</html>
