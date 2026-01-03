@@ -91,7 +91,15 @@ func Login(c *gin.Context) {
 	}
 
 	// set token in cookies
-	c.SetCookie("access_token", accesstoken, 600, "/", "", false, true)
+	c.SetCookie(
+		"access_token",
+		accesstoken,
+		600,
+		"/",
+		"",
+		false,
+		true,
+	)
 
 	c.JSON(http.StatusOK, gin.H{
 		"message":      "login successfull",
@@ -147,13 +155,38 @@ func AdminLogin(c *gin.Context) {
 
 	// Verify password
 
-	if err := helpers.CheckPassword(admin.Password, password); err != nil{
-		c.HTML(http.StatusUnauthorized,"admin_login.html",gin.H{
-			"error":"invalid credentials",
+	if err := helpers.CheckPassword(admin.Password, password); err != nil {
+		c.HTML(http.StatusUnauthorized, "admin_login.html", gin.H{
+			"error": "invalid credentials",
 		})
 		return
 	}
 
-	c.Redirect(http.StatusFound,"/admin/dashboard")
+	// Generate JWT
+	accesstoken, err := utils.GenerateAccessToken(
+		admin.ID,
+		admin.Email,
+		admin.Role,
+	)
+
+	if err != nil {
+		c.HTML(http.StatusInternalServerError, "admin_login.html", gin.H{
+			"error": "Could not login. Please try again.",
+		})
+		return
+	}
+
+	// Set token in cookies
+	c.SetCookie(
+		"access_token",
+		accesstoken,
+		900,
+		"/",
+		"",
+		false,
+		true,
+	)
+
+	c.Redirect(http.StatusFound, "/admin/dashboard")
 
 }

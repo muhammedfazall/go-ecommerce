@@ -10,37 +10,40 @@ import (
 
 func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		authHeader := c.GetHeader("Authorization")
-		if authHeader == "" {
+
+		// Read token from cookie
+		tokenString, err := c.Cookie("access_token")
+		if err != nil {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-				"error": "authorization header missing",
+				"error": "authentication required",
 			})
 			return
 		}
 
-		parts := strings.SplitN(authHeader, " ", 2)
-		if len(parts) != 2 || strings.ToLower(parts[0]) != "bearer" {
+		// Fallback: Authorization header
+		if tokenString == "" {
+			authHeader := c.GetHeader("Authorization")
+			if token, ok := strings.CutPrefix(authHeader, "Bearer "); ok {
+				tokenString = token
+			}
+		}
+
+		if tokenString == "" {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-				"error": "invalid authorization header format",
+				"error": "authentication required",
 			})
 			return
 		}
 
-		tokenString := parts[1]
-
+		//Validate JWT
 		claims, err := utils.ValidateToken(tokenString)
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-				"error": "invalid token",
+				"error": err,
 			})
 			return
 		}
-
-		// if claims["role"] == "admin" {
-		// 	c.SetCookie("access_token",token,)
-		// }
-
-		// Attach claims to context
+		
 		c.Set("user_id", claims["user_id"])
 		c.Set("email", claims["email"])
 		c.Set("role", claims["role"])

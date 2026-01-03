@@ -32,6 +32,18 @@ func RegisterRoutes(r *gin.Engine) {
 		auth.POST("/login", controllers.Login)
 	}
 
+	auth1 := r.Group("/auth")
+	auth1.Use(middlewares.AuthMiddleware())
+	auth1.GET("/user",func(ctx *gin.Context) {
+
+		role := ctx.MustGet("role").(string)
+		ctx.JSON(200,gin.H{
+			"role":role,
+		})
+	})
+
+
+
 	// --------------------
 	// Admin Public Routes
 	// --------------------
