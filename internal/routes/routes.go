@@ -34,15 +34,13 @@ func RegisterRoutes(r *gin.Engine) {
 
 	auth1 := r.Group("/auth")
 	auth1.Use(middlewares.AuthMiddleware())
-	auth1.GET("/user",func(ctx *gin.Context) {
+	auth1.GET("/user", func(ctx *gin.Context) {
 
 		role := ctx.MustGet("role").(string)
-		ctx.JSON(200,gin.H{
-			"role":role,
+		ctx.JSON(200, gin.H{
+			"role": role,
 		})
 	})
-
-
 
 	// --------------------
 	// Admin Public Routes
@@ -53,7 +51,7 @@ func RegisterRoutes(r *gin.Engine) {
 			ctx.HTML(200, "admin_login.html", nil)
 		})
 
-		adminPublic.POST("/login",controllers.AdminLogin)
+		adminPublic.POST("/login", controllers.AdminLogin)
 	}
 
 	// --------------------
@@ -66,6 +64,10 @@ func RegisterRoutes(r *gin.Engine) {
 		adminProtected.GET("/dashboard", func(ctx *gin.Context) {
 			ctx.HTML(200, "dashboard.html", nil)
 		})
+		adminProtected.GET("/sneakers", controllers.GetAllSneakers)
+		adminProtected.POST("/sneakers", controllers.AddSneaker)
+		adminProtected.PUT("/sneakers/:id", controllers.UpdateSneaker)
+		adminProtected.DELETE("/sneakers/:id", controllers.DeleteSneaker)
 
 		adminProtected.GET("/ping", func(ctx *gin.Context) {
 			ctx.JSON(200, gin.H{
