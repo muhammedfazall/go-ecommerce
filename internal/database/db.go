@@ -43,6 +43,7 @@ func Migrate() {
 		&models.Cart{},
 		&models.Order{},
 		&models.OrderItem{},
+		&models.Category{},
 	)
 	if err != nil {
 		log.Fatal("Migration Failed", err)

@@ -30,7 +30,7 @@ func AddSneaker(c *gin.Context){
 		return
 	}
 
-	if err:= database.DB.Create(&input); err!= nil{
+	if err:= database.DB.Create(&input).Error; err!= nil{
 		c.JSON(http.StatusInternalServerError,gin.H{
 			"error":"failed to add sneaker",
 		})

@@ -34,10 +34,10 @@ func RegisterRoutes(r *gin.Engine) {
 
 	auth1 := r.Group("/auth")
 	auth1.Use(middlewares.AuthMiddleware())
-	auth1.GET("/user", func(ctx *gin.Context) {
+	auth1.GET("/user", func(c *gin.Context) {
 
-		role := ctx.MustGet("role").(string)
-		ctx.JSON(200, gin.H{
+		role := c.MustGet("role").(string)
+		c.JSON(200, gin.H{
 			"role": role,
 		})
 	})
@@ -47,8 +47,8 @@ func RegisterRoutes(r *gin.Engine) {
 	// --------------------
 	adminPublic := r.Group("/admin")
 	{
-		adminPublic.GET("/login", func(ctx *gin.Context) {
-			ctx.HTML(200, "admin_login.html", nil)
+		adminPublic.GET("/login", func(c *gin.Context) {
+			c.HTML(200, "admin_login.html", nil)
 		})
 
 		adminPublic.POST("/login", controllers.AdminLogin)
@@ -61,18 +61,31 @@ func RegisterRoutes(r *gin.Engine) {
 	adminProtected.Use(middlewares.AuthMiddleware())
 	adminProtected.Use(middlewares.AdminMiddleware())
 	{
-		adminProtected.GET("/dashboard", func(ctx *gin.Context) {
-			ctx.HTML(200, "dashboard.html", nil)
+		//dashboard
+		adminProtected.GET("/dashboard", func(c *gin.Context) {
+			c.HTML(200, "dashboard.html", nil)
 		})
+
+		//CRUD
 		adminProtected.GET("/sneakers", controllers.GetAllSneakers)
 		adminProtected.POST("/sneakers", controllers.AddSneaker)
 		adminProtected.PUT("/sneakers/:id", controllers.UpdateSneaker)
 		adminProtected.DELETE("/sneakers/:id", controllers.DeleteSneaker)
 
-		adminProtected.GET("/ping", func(ctx *gin.Context) {
-			ctx.JSON(200, gin.H{
-				"message": "admin access granted",
-			})
+		//sneakers(Collections)
+
+		adminProtected.GET("/sneakers-all", func(c *gin.Context) {
+			c.HTML(200, "sneakers.html", nil)
 		})
+
+		//categories
+		adminProtected.GET("/categories", controllers.GetCategories)
+		adminProtected.POST("/categories", controllers.CreateCategory)
+
+		// adminProtected.GET("/ping", func(ctx *gin.Context) {
+		// 	ctx.JSON(200, gin.H{
+		// 		"message": "admin access granted",
+		// 	})
+		// })
 	}
 }
