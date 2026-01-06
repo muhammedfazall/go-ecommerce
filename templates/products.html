@@ -1,7 +1,15 @@
 {{define "title"}}Sneakers{{end}}
 
 {{define "content"}}
-<h1 class="text-2xl font-bold mb-4">Sneakers</h1>
+<div class="flex justify-between items-center mb-4">
+  <h1 class="text-2xl font-bold">Sneakers</h1>
+
+  <a href="/admin/products/new"
+     class="bg-black text-white px-4 py-2 rounded">
+    + Add Product
+  </a>
+</div>
+
 
 {{if .Error}}
   <p class="text-red-600 text-sm mb-4">{{.Error}}</p>
@@ -54,18 +62,18 @@
         </td> -->
 
         <td class="border p-2 space-x-2 text-center">
-          <a href="/admin/sneakers/{{.ID}}"
+          <a href="/admin/products/{{.ID}}"
              class="text-blue-600 hover:underline">
             View
           </a>
 
-          <a href="/admin/sneakers/{{.ID}}/edit"
+          <a href="/admin/products/{{.ID}}/edit"
              class="text-yellow-600 hover:underline">
             Edit
           </a>
 
           <form method="POST"
-                action="/admin/sneakers/{{.ID}}/delete"
+                action="/admin/products/{{.ID}}/delete"
                 class="inline"
                 onsubmit="return confirm('Are you sure you want to delete this sneaker?');">
             <button type="submit"
@@ -78,7 +86,7 @@
     {{else}}
       <tr>
         <td colspan="9" class="border p-4 text-center">
-          No sneakers found
+          No product found
         </td>
       </tr>
     {{end}}

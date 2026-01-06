@@ -1,0 +1,85 @@
+{{define "title"}}Product Details{{end}}
+
+{{define "content"}}
+<div class="max-w-3xl mx-auto">
+
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-bold">Sneaker Details</h1>
+
+    <a href="/admin/products"
+       class="text-sm text-blue-600 hover:underline">
+      ← Back to Products
+    </a>
+  </div>
+
+  <div class="bg-white border rounded p-6 space-y-4">
+
+    {{if .Sneaker.ImageURL}}
+      <div class="flex justify-center">
+        <img src="{{.Sneaker.ImageURL}}"
+             alt="{{.Sneaker.Name}}"
+             class="h-48 object-cover rounded">
+      </div>
+    {{end}}
+
+    <div class="grid grid-cols-2 gap-4 text-sm">
+      <div>
+        <p class="text-gray-500">Name</p>
+        <p class="font-medium">{{.Sneaker.Name}}</p>
+      </div>
+
+      <div>
+        <p class="text-gray-500">Brand</p>
+        <p class="font-medium">{{.Sneaker.Brand}}</p>
+      </div>
+
+      <div>
+        <p class="text-gray-500">Gender</p>
+        <p class="capitalize">{{.Sneaker.Gender}}</p>
+      </div>
+
+      <div>
+        <p class="text-gray-500">Price</p>
+        <p>${{ .Sneaker.Price}}</p>
+      </div>
+
+      <div>
+        <p class="text-gray-500">Stock</p>
+        <p>{{.Sneaker.Stock}}</p>
+      </div>
+
+      <div>
+        <p class="text-gray-500">Status</p>
+        {{if .Sneaker.IsActive}}
+          <span class="text-green-600 font-medium">Active</span>
+        {{else}}
+          <span class="text-red-600 font-medium">Inactive</span>
+        {{end}}
+      </div>
+    </div>
+
+    {{if .Sneaker.Description}}
+      <div>
+        <p class="text-gray-500 text-sm">Description</p>
+        <p class="text-sm">{{.Sneaker.Description}}</p>
+      </div>
+    {{end}}
+
+    <div class="flex space-x-4 pt-4">
+      <a href="/admin/products/{{.Sneaker.ID}}/edit"
+         class="px-4 py-2 border rounded text-sm">
+        Edit
+      </a>
+
+      <form method="POST"
+            action="/admin/products/{{.Sneaker.ID}}/delete"
+            onsubmit="return confirm('Delete this product?');">
+        <button class="px-4 py-2 border rounded text-sm text-red-600">
+          Delete
+        </button>
+      </form>
+    </div>
+
+  </div>
+</div>
+{{end}}

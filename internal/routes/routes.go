@@ -37,25 +37,24 @@ func RegisterRoutes(r *gin.Engine) {
 		auth.POST("/login", controllers.Login)
 	}
 
-	auth1 := r.Group("/auth")
-	auth1.Use(middlewares.AuthMiddleware())
-	auth1.GET("/user", func(c *gin.Context) {
-
-		role := c.MustGet("role").(string)
-		c.JSON(200, gin.H{
-			"role": role,
-		})
-	})
+	// auth1 := r.Group("/auth")
+	// auth1.Use(middlewares.AuthMiddleware())
+	// auth1.GET("/user", func(c *gin.Context) {
+	// 	role := c.MustGet("role").(string)
+	// 	c.JSON(200, gin.H{
+	// 		"role": role,
+	// 	})
+	// })
 
 	// --------------------
 	// Admin Public Routes
 	// --------------------
 	adminPublic := r.Group("/admin")
 	{
+		//login page
 		adminPublic.GET("/login", func(c *gin.Context) {
 			c.HTML(200, "login.html", nil)
 		})
-
 		adminPublic.POST("/login", controllers.AdminLogin)
 	}
 
@@ -67,23 +66,31 @@ func RegisterRoutes(r *gin.Engine) {
 	adminProtected.Use(middlewares.AdminMiddleware())
 	{
 
-		//dashboard
+		//DASHBOARD
 		adminProtected.GET("/dashboard", func(c *gin.Context) {
 			c.HTML(200, "dashboard.html", nil)
 		})
 
-		//products
+		//PRODUCTS
 		adminProtected.GET("/products", controllers.GetAllSneakers)
-		adminProtected.POST("/products", controllers.AddSneaker)
-		adminProtected.PUT("/products/:id", controllers.UpdateSneaker)
-		adminProtected.DELETE("/products/:id", controllers.DeleteSneaker)
+		// Add product (form)
+		adminProtected.GET("/products/new", controllers.AddSneakerPage)
+		// Add product (submit)
+		adminProtected.POST("/products/new", controllers.AddSneaker)
 
-		//users
+		//view product
+		adminProtected.GET("/products/:id",controllers.ViewSneaker)
+		//edit product (form)
+		adminProtected.GET("/products/:id/edit", controllers.EditSneaker)
+		//update product (submit)
+		adminProtected.POST("/products/:id/edit", controllers.UpdateSneaker)
+		adminProtected.POST("/products/:id/delete", controllers.DeleteSneaker)
+
+		//USERS
 
 		adminProtected.GET("/users", controllers.GetUsers)
 
-
-		//categories
+		//CATEGORIES
 		adminProtected.GET("/categories", controllers.GetCategories)
 		adminProtected.POST("/categories", controllers.CreateCategory)
 
