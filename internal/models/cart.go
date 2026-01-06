@@ -1,7 +1,9 @@
 package models
 
+import "gorm.io/gorm"
+
 type Cart struct {
-	BaseModel
+	gorm.Model
 
 	UserID    uint `gorm:"not null;index"`
 	SneakerID uint `gorm:"not null;index"`

@@ -1,7 +1,9 @@
 package models
 
+import "gorm.io/gorm"
+
 type Order struct {
-	BaseModel
+	gorm.Model
 
 	UserID      uint    `gorm:"not null;index"`
 	TotalAmount float64 `gorm:"not null"`

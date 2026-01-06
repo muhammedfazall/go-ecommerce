@@ -1,7 +1,9 @@
 package models
 
+import "gorm.io/gorm"
+
 type Sneaker struct {
-	BaseModel
+	gorm.Model
 
 	Name        string  `gorm:"not null" json:"name"`
 	Brand       string  `gorm:"not null" json:"brand"`
@@ -10,6 +12,6 @@ type Sneaker struct {
 	Description string  `gorm:"type:text" json:"description"`
 	Price       float64 `gorm:"not null" json:"price"`
 	Stock       int     `gorm:"not null" json:"stock"`
-	ImageURL    string `json:"image_url"`
-	IsActive    bool `gorm:"default:true" json:"is_active"`
+	ImageURL    string  `json:"image_url"`
+	IsActive    bool    `gorm:"default:true" json:"is_active"`
 }

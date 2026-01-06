@@ -1,6 +1,9 @@
 package models
 
+import "gorm.io/gorm"
+
 type Category struct {
-	BaseModel
+	gorm.Model
+
 	Name string `gorm:"size:100;unique;not null"`
 }

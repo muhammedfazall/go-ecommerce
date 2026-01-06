@@ -15,8 +15,8 @@ func main() {
 	database.Migrate() //auto migrations
 
 	r := gin.Default()
+	// r.LoadHTMLGlob("templates/**/*.html")
 
-	r.LoadHTMLGlob("web/*.html")
 
 	routes.RegisterRoutes(r)
 

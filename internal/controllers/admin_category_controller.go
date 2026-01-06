@@ -13,17 +13,19 @@ func GetCategories(c *gin.Context) {
 	var categories []models.Category
 
 	if err := database.DB.Find(&categories).Error; err != nil {
-		c.JSON(http.StatusInternalServerError,gin.H{
-			"error":"failed to fetch categories",
+		c.HTML(http.StatusInternalServerError,"categories.html", gin.H{
+			"Error": "failed to fetch categories",
 		})
 		return
 	}
-
-	c.JSON(http.StatusOK,categories)
+	
+	c.HTML(200,"categories.html",gin.H{
+		"Categories":categories,
+	})
 }
 
-func CreateCategory(c *gin.Context)  {
-	var input struct{
+func CreateCategory(c *gin.Context) {
+	var input struct {
 		Name string `json:"name"`
 	}
 
@@ -35,11 +37,13 @@ func CreateCategory(c *gin.Context)  {
 	category := models.Category{
 		Name: input.Name,
 	}
-	if err := database.DB.Create(&category).Error; err != nil{
-		c.JSON(http.StatusInternalServerError,gin.H{
-			"error":"failed to create category",
+	if err := database.DB.Create(&category).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "failed to create category",
 		})
 		return
 	}
-	c.JSON(http.StatusCreated,category)
+
+	// log.Println("cate: ", category)
+	c.JSON(http.StatusCreated, category)
 }

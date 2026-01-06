@@ -113,8 +113,8 @@ func AdminLogin(c *gin.Context) {
 	password := c.PostForm("password")
 
 	if email == "" || password == "" {
-		c.HTML(http.StatusBadRequest, "admin_login.html", gin.H{
-			"error": "Email and password are required",
+		c.HTML(http.StatusBadRequest, "login.html", gin.H{
+			"Error": "Email and password are required",
 		})
 		return
 	}
@@ -124,31 +124,31 @@ func AdminLogin(c *gin.Context) {
 	// Find user by email
 	err := database.DB.Where("email = ?", email).First(&admin).Error
 	if err != nil {
-		c.HTML(http.StatusUnauthorized, "admin_login.html", gin.H{
-			"error": "invalid credentials",
+		c.HTML(http.StatusUnauthorized, "login.html", gin.H{
+			"Error": "invalid credentials",
 		})
 		return
 	}
 
 	// Check role
 	if admin.Role != "admin" {
-		c.HTML(http.StatusForbidden, "admin_login.html", gin.H{
-			"error": "Admin access only",
+		c.HTML(http.StatusForbidden, "login.html", gin.H{
+			"Error": "Admin access only",
 		})
 		return
 	}
 
 	// Check account flags
 	if admin.IsBlocked {
-		c.HTML(http.StatusForbidden, "admin_login.html", gin.H{
-			"error": "Account is blocked",
+		c.HTML(http.StatusForbidden, "login.html", gin.H{
+			"Error": "Account is blocked",
 		})
 		return
 	}
 
 	if admin.Status != "active" {
-		c.HTML(http.StatusForbidden, "admin_login.html", gin.H{
-			"error": "Account is not active",
+		c.HTML(http.StatusForbidden, "login.html", gin.H{
+			"Error": "Account is not active",
 		})
 		return
 	}
@@ -156,8 +156,8 @@ func AdminLogin(c *gin.Context) {
 	// Verify password
 
 	if err := helpers.CheckPassword(admin.Password, password); err != nil {
-		c.HTML(http.StatusUnauthorized, "admin_login.html", gin.H{
-			"error": "invalid credentials",
+		c.HTML(http.StatusUnauthorized, "login.html", gin.H{
+			"Error": "invalid credentials",
 		})
 		return
 	}
@@ -170,8 +170,8 @@ func AdminLogin(c *gin.Context) {
 	)
 
 	if err != nil {
-		c.HTML(http.StatusInternalServerError, "admin_login.html", gin.H{
-			"error": "Could not login. Please try again.",
+		c.HTML(http.StatusInternalServerError, "login.html", gin.H{
+			"Error": "Could not login. Please try again.",
 		})
 		return
 	}

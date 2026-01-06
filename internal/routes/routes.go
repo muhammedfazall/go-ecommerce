@@ -3,7 +3,10 @@ package routes
 import (
 	"time"
 
+	"path/filepath"
+
 	"github.com/gin-contrib/cors"
+	"github.com/gin-contrib/multitemplate"
 	"github.com/gin-gonic/gin"
 	"github.com/muhammedfazall/go-ecommerce/internal/controllers"
 	"github.com/muhammedfazall/go-ecommerce/internal/middlewares"
@@ -22,6 +25,8 @@ func RegisterRoutes(r *gin.Engine) {
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
 	}))
+
+	r.HTMLRender = createMyRender("templates")
 
 	// --------------------
 	// Auth APIs
@@ -48,7 +53,7 @@ func RegisterRoutes(r *gin.Engine) {
 	adminPublic := r.Group("/admin")
 	{
 		adminPublic.GET("/login", func(c *gin.Context) {
-			c.HTML(200, "admin_login.html", nil)
+			c.HTML(200, "login.html", nil)
 		})
 
 		adminPublic.POST("/login", controllers.AdminLogin)
@@ -61,22 +66,22 @@ func RegisterRoutes(r *gin.Engine) {
 	adminProtected.Use(middlewares.AuthMiddleware())
 	adminProtected.Use(middlewares.AdminMiddleware())
 	{
+
 		//dashboard
 		adminProtected.GET("/dashboard", func(c *gin.Context) {
 			c.HTML(200, "dashboard.html", nil)
 		})
 
-		//CRUD
-		adminProtected.GET("/sneakers", controllers.GetAllSneakers)
-		adminProtected.POST("/sneakers", controllers.AddSneaker)
-		adminProtected.PUT("/sneakers/:id", controllers.UpdateSneaker)
-		adminProtected.DELETE("/sneakers/:id", controllers.DeleteSneaker)
+		//products
+		adminProtected.GET("/products", controllers.GetAllSneakers)
+		adminProtected.POST("/products", controllers.AddSneaker)
+		adminProtected.PUT("/products/:id", controllers.UpdateSneaker)
+		adminProtected.DELETE("/products/:id", controllers.DeleteSneaker)
 
-		//sneakers(Collections)
+		//users
 
-		adminProtected.GET("/sneakers-all", func(c *gin.Context) {
-			c.HTML(200, "sneakers.html", nil)
-		})
+		adminProtected.GET("/users", controllers.GetUsers)
+
 
 		//categories
 		adminProtected.GET("/categories", controllers.GetCategories)
@@ -88,4 +93,48 @@ func RegisterRoutes(r *gin.Engine) {
 		// 	})
 		// })
 	}
+}
+
+func createMyRender(templatesDir string) multitemplate.Renderer {
+	r := multitemplate.NewRenderer()
+
+	// load all html files
+	files, err := filepath.Glob(filepath.Join(templatesDir, "*.html"))
+	if err != nil {
+		panic(err)
+	}
+
+	adminBase := filepath.Join(templatesDir, "admin_base.html")
+	// adminLoginBase := filepath.Join(templatesDir, "admin_login_base.html")
+
+	for _, file := range files {
+		name := filepath.Base(file)
+
+		switch name {
+
+		// -------------------------
+		// Admin Login Page
+		// -------------------------
+		case "login.html":
+			// OPTION 1: login without base
+			r.AddFromFiles(name, file)
+
+			// OPTION 2 (if you want a login base)
+			// r.AddFromFiles(name, adminLoginBase, file)
+
+		// -------------------------
+		// Base templates (skip)
+		// -------------------------
+		case "admin_base.html", "admin_login_base.html":
+			continue
+
+		// -------------------------
+		// All other admin pages
+		// -------------------------
+		default:
+			r.AddFromFiles(name, adminBase, file)
+		}
+	}
+
+	return r
 }
