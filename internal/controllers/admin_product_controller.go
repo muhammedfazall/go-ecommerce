@@ -12,16 +12,31 @@ import (
 func GetAllSneakers(c *gin.Context) {
 	var sneakers []models.Sneaker
 
-	if err := database.DB.Order("created_at desc").Find(&sneakers).Error; err != nil {
-		c.HTML(500, "products.html", gin.H{
-			"Error": "failed to fetch sneakers",
+	query := c.Query("q")
+
+	db := database.DB
+
+	if query != "" {
+		like := "%" + query + "%"
+		db = db.Where(
+			"name ILIKE ? OR brand ILIKE ? OR gender ILIKE ?",
+			like, like, like,
+		)
+	}
+
+	if err := db.Order("created_at desc").Find(&sneakers).Error; err != nil {
+		c.HTML(http.StatusInternalServerError, "products.html", gin.H{
+			"Error": "Failed to load products",
 		})
 		return
 	}
+
 	c.HTML(http.StatusOK, "products.html", gin.H{
 		"Sneakers": sneakers,
+		"Query":    query,
 	})
 }
+
 
 //add product
 func AddSneakerPage(c *gin.Context) {

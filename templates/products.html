@@ -10,10 +10,27 @@
   </a>
 </div>
 
+<!-- Search Bar -->
+<form method="GET"
+      action="/admin/products"
+      class="mb-4 flex gap-2 max-w-md">
+
+  <input type="text"
+         name="q"
+         value="{{.Query}}"
+         placeholder="Search by name, brand, or gender"
+         class="border p-2 w-full rounded" />
+
+  <button type="submit"
+          class="bg-gray-800 text-white px-4 rounded">
+    Search
+  </button>
+</form>
 
 {{if .Error}}
   <p class="text-red-600 text-sm mb-4">{{.Error}}</p>
 {{end}}
+
 
 <table class="w-full border text-sm">
   <thead>
