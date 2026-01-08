@@ -1,0 +1,101 @@
+{{define "title"}}Admin Profile{{end}}
+
+{{define "content"}}
+<div class="max-w-4xl mx-auto bg-white p-12">
+
+  <!-- Header -->
+  <div class="text-center mb-16">
+    <div
+      class="w-24 h-24 flex items-center justify-center rounded-full bg-gray-100 text-gray-700 text-3xl font-medium border border-gray-300 mx-auto mb-6">
+      {{slice .User.Username 0 1}}
+    </div>
+
+    <h1 class="text-3xl font-light text-gray-900 mb-2">
+      {{.User.Username}}
+    </h1>
+    <p class="text-gray-500 text-lg">
+      {{.User.Email}}
+    </p>
+  </div>
+
+  <!-- Profile Info -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16">
+
+    <!-- Basic Information -->
+    <div>
+      <h2 class="text-xl font-light text-gray-900 mb-6">
+        Profile Information
+      </h2>
+
+      <div class="space-y-4">
+        <div class="flex justify-between py-2 border-b border-gray-100">
+          <span class="text-gray-600">Admin ID</span>
+          <span class="font-medium">{{.User.ID}}</span>
+        </div>
+
+        <div class="flex justify-between py-2 border-b border-gray-100">
+          <span class="text-gray-600">Role</span>
+          <span class="font-medium text-gray-900 capitalize">
+            {{.User.Role}}
+          </span>
+        </div>
+
+        <div class="flex justify-between py-2 border-b border-gray-100">
+          <span class="text-gray-600">Account Status</span>
+          <span class="font-medium
+            {{if eq .User.Status "active"}}text-green-600{{else}}text-red-600{{end}}">
+            {{.User.Status}}
+          </span>
+        </div>
+
+        <div class="flex justify-between py-2 border-b border-gray-100">
+          <span class="text-gray-600">Blocked</span>
+          <span class="font-medium">
+            {{if .User.IsBlocked}}Yes{{else}}No{{end}}
+          </span>
+        </div>
+
+        <div class="flex justify-between py-2">
+          <span class="text-gray-600">Joined On</span>
+          <span class="font-medium">
+            {{.User.CreatedAt.Format "02 Jan 2006"}}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Security -->
+    <div>
+      <h2 class="text-xl font-light text-gray-900 mb-6">
+        Security
+      </h2>
+
+      <div class="space-y-4 text-gray-700">
+        <p class="text-sm text-gray-500">
+          For security reasons, password details are not displayed.
+        </p>
+
+        <a href="/admin/password-change"
+          class="inline-block mt-4 bg-gray-900 text-white py-3 px-6 rounded-lg hover:bg-gray-800 transition-colors text-base font-medium">
+          Change Password
+        </a>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Actions -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8 border-t border-gray-200">
+    <a href="/admin/profile/edit"
+      class="block text-center bg-white text-gray-700 border border-gray-300 py-4 px-6 rounded-lg hover:bg-gray-50 transition-colors text-base font-medium">
+      Edit Profile
+    </a>
+
+    <a href="/admin/logout"
+      class="block text-center bg-gray-900 text-white py-4 px-6 rounded-lg hover:bg-gray-800 transition-colors text-base font-medium">
+      Logout
+    </a>
+  </div>
+
+</div>
+{{end}}

@@ -79,29 +79,36 @@ func RegisterRoutes(r *gin.Engine) {
 		adminProtected.POST("/products/new", controllers.AddSneaker)
 
 		//view product
-		adminProtected.GET("/products/:id",controllers.ViewSneaker)
+		adminProtected.GET("/products/:id", controllers.ViewSneaker)
 		//edit product (form)
 		adminProtected.GET("/products/:id/edit", controllers.EditSneaker)
 		//update product (submit)
 		adminProtected.POST("/products/:id/edit", controllers.UpdateSneaker)
 		adminProtected.POST("/products/:id/delete", controllers.DeleteSneaker)
 
-		//Admins
-		adminProtected.GET("/admins", controllers.GetAdmins)
 		
 		//USERS
-
+		
 		adminProtected.GET("/users", controllers.GetUsers)
 		//block/unbock user
 		adminProtected.POST("/users/:id/block", controllers.ToggleBlockUser)
 		//change role
 		adminProtected.POST("/users/:id/role", controllers.ChangeUserRole)
-
-
-
+		
 		//CATEGORIES
 		adminProtected.GET("/categories", controllers.GetCategories)
 		adminProtected.POST("/categories", controllers.CreateCategory)
+		
+		//Admins
+		adminProtected.GET("/admins", controllers.GetAdmins)
+		adminProtected.GET("/profile", controllers.AdminProfile)
+		adminProtected.GET("/profile/edit", controllers.EditAdminProfile)
+		adminProtected.POST("/profile/update", controllers.UpdateAdminProfile)
+
+		adminProtected.GET("/password-change", controllers.AdminChangePasswordPage)
+		adminProtected.POST("/password-change", controllers.AdminChangePassword)
+
+		adminProtected.GET("/logout", controllers.AdminLogout)
 
 		// adminProtected.GET("/ping", func(ctx *gin.Context) {
 		// 	ctx.JSON(200, gin.H{
