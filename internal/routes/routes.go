@@ -86,9 +86,18 @@ func RegisterRoutes(r *gin.Engine) {
 		adminProtected.POST("/products/:id/edit", controllers.UpdateSneaker)
 		adminProtected.POST("/products/:id/delete", controllers.DeleteSneaker)
 
+		//Admins
+		adminProtected.GET("/admins", controllers.GetAdmins)
+		
 		//USERS
 
 		adminProtected.GET("/users", controllers.GetUsers)
+		//block/unbock user
+		adminProtected.POST("/users/:id/block", controllers.ToggleBlockUser)
+		//change role
+		adminProtected.POST("/users/:id/role", controllers.ChangeUserRole)
+
+
 
 		//CATEGORIES
 		adminProtected.GET("/categories", controllers.GetCategories)

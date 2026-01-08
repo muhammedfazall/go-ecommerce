@@ -1,0 +1,57 @@
+{{define "title"}}Admins{{end}}
+
+{{define "content"}}
+
+<div class="flex items-center gap-3 mb-4">
+    <select onchange="location = this.value" class="border px-3 py-2 rounded text-lg font-semibold cursor-pointer">
+
+        <option value="/admin/users">Users</option>
+        <option value="/admin/admins" selected>Admins</option>
+
+    </select>
+</div>
+
+
+<!-- <nav class="mb-6 flex gap-4">
+    <a href="/admin/users" class="text-blue-600">Users</a>
+    <a href="/admin/admins" class="text-blue-600">Admins</a>
+</nav> -->
+
+<table class="w-full border text-sm">
+    <thead>
+        <tr>
+            <th class="border p-2">ID</th>
+            <th class="border p-2">Username</th>
+            <th class="border p-2">Email</th>
+            <th class="border p-2">Status</th>
+            <th class="border p-2">Created At</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {{range .Admins}}
+        <tr>
+            <td class="border p-2">{{.ID}}</td>
+            <td class="border p-2">{{.Username}}</td>
+            <td class="border p-2">{{.Email}}</td>
+            <td class="border p-2">
+                {{if eq .Status "active"}}
+                <span class="text-green-600 font-semibold">Active</span>
+                {{else}}
+                <span class="text-red-600 font-semibold">Inactive</span>
+                {{end}}
+            </td>
+            <td class="border p-2">
+                {{.CreatedAt.Format "02 Jan 2006"}}
+            </td>
+        </tr>
+        {{else}}
+        <tr>
+            <td colspan="5" class="border p-4 text-center">
+                No admins found
+            </td>
+        </tr>
+        {{end}}
+    </tbody>
+</table>
+{{end}}
