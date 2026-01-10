@@ -29,7 +29,7 @@ func RegisterRoutes(r *gin.Engine) {
 	r.HTMLRender = createMyRender("templates")
 
 
-	// r.GET("/collections",controllers.)
+	r.GET("/collections",controllers.Collections)
 	// --------------------
 	// Auth APIs
 	// --------------------
