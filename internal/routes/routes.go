@@ -28,8 +28,11 @@ func RegisterRoutes(r *gin.Engine) {
 
 	r.HTMLRender = createMyRender("templates")
 
+	r.GET("/collections", controllers.Collections)
+	r.GET("/products/:id",controllers.ProductDetails)
+	// GET /categories                  → All categories
+	// GET /categories/:id/products     → Products by category
 
-	r.GET("/collections",controllers.Collections)
 	// --------------------
 	// Auth APIs
 	// --------------------
@@ -88,19 +91,18 @@ func RegisterRoutes(r *gin.Engine) {
 		adminProtected.POST("/products/:id/edit", controllers.UpdateSneaker)
 		adminProtected.POST("/products/:id/delete", controllers.DeleteSneaker)
 
-		
 		//USERS
-		
+
 		adminProtected.GET("/users", controllers.GetUsers)
 		//block/unbock user
 		adminProtected.POST("/users/:id/block", controllers.ToggleBlockUser)
 		//change role
 		adminProtected.POST("/users/:id/role", controllers.ChangeUserRole)
-		
+
 		//CATEGORIES
 		adminProtected.GET("/categories", controllers.GetCategories)
 		adminProtected.POST("/categories", controllers.CreateCategory)
-		
+
 		//Admins
 		adminProtected.GET("/admins", controllers.GetAdmins)
 		adminProtected.GET("/profile", controllers.AdminProfile)

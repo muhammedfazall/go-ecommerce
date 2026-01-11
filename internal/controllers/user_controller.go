@@ -1,11 +1,13 @@
 package controllers
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/muhammedfazall/go-ecommerce/internal/database"
 	"github.com/muhammedfazall/go-ecommerce/internal/models"
+	"gorm.io/gorm"
 )
 
 func Collections(c *gin.Context) {
@@ -31,5 +33,34 @@ func Collections(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"collections": sneakers,
+	})
+}
+
+func ProductDetails(c *gin.Context) {
+	id := c.Param("id")
+
+	var sneaker models.Sneaker
+
+	result := database.DB.First(&sneaker, id)
+
+	if result.Error != nil {
+
+		// record not found
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Product not found",
+			})
+			return
+		}
+
+		// other DB error
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Error fetching product",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"product": sneaker,
 	})
 }
