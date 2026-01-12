@@ -29,12 +29,10 @@ func RegisterRoutes(r *gin.Engine) {
 	r.HTMLRender = createMyRender("templates")
 
 	r.GET("/collections", controllers.AllProducts)
-	r.GET("/products/:id",controllers.ProductDetails)
-	r.GET( "/categories",controllers.Categories)
-	r.GET("/categories/:id/products",controllers.ProductsByCategory)
+	r.GET("/products/:id", controllers.ProductDetails)
+	r.GET("/categories", controllers.Categories)
+	r.GET("/categories/:id/products", controllers.ProductsByCategory)
 	r.GET("/products/search", controllers.SearchProducts)
-
-
 
 	// --------------------
 	// Auth APIs
@@ -45,14 +43,18 @@ func RegisterRoutes(r *gin.Engine) {
 		auth.POST("/login", controllers.Login)
 	}
 
-	// auth1 := r.Group("/auth")
-	// auth1.Use(middlewares.AuthMiddleware())
-	// auth1.GET("/user", func(c *gin.Context) {
-	// 	role := c.MustGet("role").(string)
-	// 	c.JSON(200, gin.H{
-	// 		"role": role,
-	// 	})
-	// })
+	// --------------------
+	// Cart APIs (User Protected)
+	// --------------------
+	cart := r.Group("/cart")
+	cart.Use(middlewares.AuthMiddleware())
+	{
+		cart.POST("/add", controllers.AddToCart)
+		cart.GET("", controllers.GetCart)
+		cart.PUT("/update", controllers.UpdateCartItem)
+		cart.DELETE("/remove/:productId", controllers.RemoveFromCart)
+		cart.DELETE("/clear", controllers.ClearCart)
+	}
 
 	// --------------------
 	// Admin Public Routes
