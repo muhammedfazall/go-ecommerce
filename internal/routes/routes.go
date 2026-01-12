@@ -28,10 +28,13 @@ func RegisterRoutes(r *gin.Engine) {
 
 	r.HTMLRender = createMyRender("templates")
 
-	r.GET("/collections", controllers.Collections)
+	r.GET("/collections", controllers.AllProducts)
 	r.GET("/products/:id",controllers.ProductDetails)
-	// GET /categories                  → All categories
-	// GET /categories/:id/products     → Products by category
+	r.GET( "/categories",controllers.Categories)
+	r.GET("/categories/:id/products",controllers.ProductsByCategory)
+	r.GET("/products/search", controllers.SearchProducts)
+
+
 
 	// --------------------
 	// Auth APIs
