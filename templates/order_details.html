@@ -1,0 +1,53 @@
+{{define "title"}}Order Details{{end}}
+
+{{define "content"}}
+<h1 class="text-3xl font-bold mb-6">Order #{{.Order.ID}}</h1>
+
+<div class="bg-white rounded-xl shadow p-6 mb-6">
+    <p><strong>User:</strong> {{.Order.User.Email}}</p>
+    <p><strong>Total:</strong> ₹{{printf "%.2f" .Order.TotalAmount}}</p>
+    <p class="mt-2">
+        <strong>Status:</strong>
+        <span class="font-semibold">{{.Order.Status}}</span>
+    </p>
+
+    <form method="POST" action="/admin/orders/{{.Order.ID}}/status" class="mt-4 flex gap-4">
+        <select name="status" class="border rounded-lg px-4 py-2">
+            <option value="pending" {{if eq .Order.Status "pending" }}selected{{end}}>Pending</option>
+            <option value="paid" {{if eq .Order.Status "paid" }}selected{{end}}>Paid</option>
+            <option value="shipped" {{if eq .Order.Status "shipped" }}selected{{end}}>Shipped</option>
+            <option value="delivered" {{if eq .Order.Status "delivered" }}selected{{end}}>Delivered</option>
+            <option value="cancelled" {{if eq .Order.Status "cancelled" }}selected{{end}}>Cancelled</option>
+        </select>
+
+        <button class="bg-primary-600 text-white px-6 py-2 rounded-lg">
+            Update
+        </button>
+    </form>
+</div>
+
+<div class="bg-white rounded-xl shadow overflow-hidden">
+    <table class="min-w-full text-sm">
+        <thead class="bg-gray-100">
+            <tr>
+                <th class="px-6 py-3 text-left">Product</th>
+                <th class="px-6 py-3 text-left">Price</th>
+                <th class="px-6 py-3 text-left">Qty</th>
+                <th class="px-6 py-3 text-left">Subtotal</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{range .Items}}
+            <tr class="border-t">
+                <td class="px-6 py-4">{{.SneakerName}}</td>
+                <td class="px-6 py-4">₹{{printf "%.2f" .Price}}</td>
+                <td class="px-6 py-4">{{.Quantity}}</td>
+                <td class="px-6 py-4">
+                    ₹{{printf "%.2f" .Subtotal}}
+                </td>
+            </tr>
+            {{end}}
+        </tbody>
+    </table>
+</div>
+{{end}}

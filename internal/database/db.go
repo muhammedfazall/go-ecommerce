@@ -45,6 +45,7 @@ func Migrate() {
 		&models.Order{},
 		&models.OrderItem{},
 		&models.Category{},
+		&models.Wishlist{},
 	)
 	if err != nil {
 		log.Fatal("Migration Failed", err)

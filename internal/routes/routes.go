@@ -44,6 +44,18 @@ func RegisterRoutes(r *gin.Engine) {
 	}
 
 	// --------------------
+	// Wishlist APIs (User Protected)
+	// --------------------
+
+	wishlist := r.Group("/wishlist")
+	wishlist.Use(middlewares.AuthMiddleware())
+	{
+		wishlist.POST("/add", controllers.AddToWishlist)
+		wishlist.GET("", controllers.GetWishlist)
+		wishlist.DELETE("/remove/:productId", controllers.RemoveFromWishlist)
+	}
+
+	// --------------------
 	// Cart APIs (User Protected)
 	// --------------------
 	cart := r.Group("/cart")
@@ -130,6 +142,11 @@ func RegisterRoutes(r *gin.Engine) {
 		//CATEGORIES
 		adminProtected.GET("/categories", controllers.GetCategories)
 		adminProtected.POST("/categories", controllers.CreateCategory)
+
+		// ORDERS
+		adminProtected.GET("/orders", controllers.GetAllOrders)
+		adminProtected.GET("/orders/:id", controllers.ViewOrderDetails)
+		adminProtected.POST("/orders/:id/status", controllers.UpdateOrderStatus)
 
 		//Admins
 		adminProtected.GET("/admins", controllers.GetAdmins)
