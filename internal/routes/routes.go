@@ -57,6 +57,18 @@ func RegisterRoutes(r *gin.Engine) {
 	}
 
 	// --------------------
+	// Order APIs (User Protected)
+	// --------------------
+
+	orders := r.Group("/orders")
+	orders.Use(middlewares.AuthMiddleware())
+	{
+		orders.POST("", controllers.PlaceOrder)
+		orders.GET("", controllers.GetMyOrders)
+		orders.GET("/:id", controllers.GetOrderDetails)
+	}
+
+	// --------------------
 	// Admin Public Routes
 	// --------------------
 	adminPublic := r.Group("/admin")
