@@ -69,6 +69,17 @@ func RegisterRoutes(r *gin.Engine) {
 	}
 
 	// --------------------
+	// Payment APIs (User Protected)
+	// --------------------
+
+	payments := r.Group("/payments")
+	payments.Use(middlewares.AuthMiddleware())
+	{
+		payments.POST("/create", controllers.CreatePayment)
+		payments.POST("/verify", controllers.VerifyPayment)
+	}
+
+	// --------------------
 	// Admin Public Routes
 	// --------------------
 	adminPublic := r.Group("/admin")

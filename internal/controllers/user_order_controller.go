@@ -1,17 +1,20 @@
 package controllers
 
 import (
+	"fmt"
+
 	"github.com/gin-gonic/gin"
 	"github.com/muhammedfazall/go-ecommerce/internal/database"
 	"github.com/muhammedfazall/go-ecommerce/internal/models"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 // place order
 func PlaceOrder(c *gin.Context) {
 	userID := c.MustGet("user_id").(uint)
 
-	// 1. Load cart
+	// 1. Load cart with items
 	var cart models.Cart
 	err := database.DB.
 		Preload("Items.Sneaker").
@@ -23,16 +26,42 @@ func PlaceOrder(c *gin.Context) {
 		return
 	}
 
-	// 2. Calculate total
-	var total float64
-	for _, item := range cart.Items {
-		total += float64(item.Quantity) * item.Sneaker.Price
-	}
-
-	// 3. Transaction (VERY IMPORTANT)
+	// 2. Transaction (MANDATORY)
 	err = database.DB.Transaction(func(tx *gorm.DB) error {
 
-		// create order
+		var total float64
+
+		// 3. Validate & reduce stock
+		for _, item := range cart.Items {
+
+			var sneaker models.Sneaker
+
+			// lock row (important)
+			if err := tx.
+				Clauses(clause.Locking{Strength: "UPDATE"}).
+				First(&sneaker, item.SneakerID).Error; err != nil {
+				return err
+			}
+
+			// check stock
+			if sneaker.Stock < item.Quantity {
+				return fmt.Errorf(
+					"insufficient stock for %s (available %d)",
+					sneaker.Name,
+					sneaker.Stock,
+				)
+			}
+
+			// reduce stock
+			sneaker.Stock -= item.Quantity
+			if err := tx.Save(&sneaker).Error; err != nil {
+				return err
+			}
+
+			total += float64(item.Quantity) * sneaker.Price
+		}
+
+		// 4. Create order
 		order := models.Order{
 			UserID:      userID,
 			TotalAmount: total,
@@ -43,7 +72,7 @@ func PlaceOrder(c *gin.Context) {
 			return err
 		}
 
-		// create order items
+		// 5. Create order items
 		for _, item := range cart.Items {
 			orderItem := models.OrderItem{
 				OrderID:   order.ID,
@@ -57,7 +86,7 @@ func PlaceOrder(c *gin.Context) {
 			}
 		}
 
-		// clear cart
+		// 6. Clear cart
 		if err := tx.Where("cart_id = ?", cart.ID).
 			Delete(&models.CartItem{}).Error; err != nil {
 			return err
@@ -66,14 +95,16 @@ func PlaceOrder(c *gin.Context) {
 		return nil
 	})
 
+	// 7. Handle transaction failure
 	if err != nil {
-		c.JSON(500, gin.H{"error": "Failed to place order"})
+		c.JSON(400, gin.H{
+			"error": err.Error(),
+		})
 		return
 	}
 
 	c.JSON(201, gin.H{
 		"message": "Order placed successfully",
-		"total":   total,
 	})
 }
 
