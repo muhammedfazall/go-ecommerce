@@ -41,6 +41,7 @@ func RegisterRoutes(r *gin.Engine) {
 	{
 		auth.POST("/register", controllers.Register)
 		auth.POST("/login", controllers.Login)
+		auth.POST("/logout", controllers.Logout)
 	}
 
 	// --------------------
@@ -92,6 +93,16 @@ func RegisterRoutes(r *gin.Engine) {
 	}
 
 	// --------------------
+	// User profile/Logout (User Protected)
+	// --------------------
+
+	user := r.Group("/user")
+	user.Use(middlewares.AuthMiddleware())
+	{
+		user.GET("/profile", controllers.UserProfile)
+	}
+
+	// --------------------
 	// Admin Public Routes
 	// --------------------
 	adminPublic := r.Group("/admin")
@@ -112,9 +123,7 @@ func RegisterRoutes(r *gin.Engine) {
 	{
 
 		//DASHBOARD
-		adminProtected.GET("/dashboard", func(c *gin.Context) {
-			c.HTML(200, "dashboard.html", nil)
-		})
+		adminProtected.GET("/dashboard", controllers.AdminDashboard)
 
 		//PRODUCTS
 		adminProtected.GET("/products", controllers.GetAllSneakers)

@@ -94,7 +94,7 @@ func Login(c *gin.Context) {
 	c.SetCookie(
 		"access_token",
 		accesstoken,
-		600,
+		3600,
 		"/",
 		"",
 		false,
@@ -180,7 +180,7 @@ func AdminLogin(c *gin.Context) {
 	c.SetCookie(
 		"access_token",
 		accesstoken,
-		900,
+		3600,
 		"/",
 		"",
 		false,

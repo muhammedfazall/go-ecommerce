@@ -1,7 +1,72 @@
 {{define "title"}}Edit Profile{{end}}
 
 {{define "content"}}
-<h1 class="text-2xl font-bold mb-4">Edit Profile</h1>
 
+<!-- Page Header -->
+<div class="mb-8">
+  <h1 class="text-3xl font-bold text-gray-800">Edit Profile</h1>
+  <p class="text-gray-500 mt-1">Update your admin account details</p>
+</div>
+
+<!-- Error Message -->
+{{if .error}}
+<div class="mb-6 bg-red-100 border border-red-300 text-red-700 px-4 py-3 rounded-lg">
+  {{.error}}
+</div>
+{{end}}
+
+<!-- Edit Profile Form -->
+<div class="bg-white rounded-xl shadow p-6 max-w-xl">
+
+  <form method="POST" action="/admin/profile/update" class="space-y-6">
+
+    <!-- Username -->
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">
+        Username
+      </label>
+      <input
+        type="text"
+        name="username"
+        value="{{.User.Username}}"
+        class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary-500 focus:outline-none"
+        required
+      />
+    </div>
+
+    <!-- Email -->
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">
+        Email
+      </label>
+      <input
+        type="email"
+        name="email"
+        value="{{.User.Email}}"
+        class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary-500 focus:outline-none"
+        required
+      />
+    </div>
+
+    <!-- Actions -->
+    <div class="flex gap-4">
+      <button
+        type="submit"
+        class="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition"
+      >
+        Save Changes
+      </button>
+
+      <a
+        href="/admin/profile"
+        class="px-6 py-2 rounded-lg border text-gray-700 hover:bg-gray-100 transition"
+      >
+        Cancel
+      </a>
+    </div>
+
+  </form>
+
+</div>
 
 {{end}}

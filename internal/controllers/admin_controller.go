@@ -67,18 +67,20 @@ func UpdateAdminProfile(c *gin.Context) {
 	username := c.PostForm("username")
 	email := c.PostForm("email")
 
-	if username == "" || email == "" {
-		c.HTML(http.StatusBadRequest, "admin_profile_edit.html", gin.H{
-			"error": "Username and Email are required",
-		})
-		return
-	}
-
 	var admin models.User
 	if err := database.DB.First(&admin, adminID).Error; err != nil {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
+
+	if username == "" || email == "" {
+		c.HTML(http.StatusBadRequest, "admin_profile_edit.html", gin.H{
+			"error": "Username and Email are required",
+			"User":  admin,
+		})
+		return
+	}
+
 
 	admin.Username = username
 	admin.Email = email
@@ -135,5 +137,16 @@ func AdminChangePassword(c *gin.Context) {
 
 
 func AdminLogout(c *gin.Context) {
+	c.SetCookie(
+		"access_token",
+		"",
+		-1,
+		"/",
+		"",
+		false,
+		true,
+	)
 
+	c.Redirect(http.StatusFound, "/admin/login")
 }
+

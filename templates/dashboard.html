@@ -1,7 +1,150 @@
 {{define "title"}}Dashboard{{end}}
 
 {{define "content"}}
-<h1 class="text-2xl font-bold mb-4">Dashboard</h1>
 
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- Page Header -->
+<div class="mb-8">
+  <h1 class="text-3xl font-bold text-gray-800">Dashboard</h1>
+  <p class="text-gray-500 mt-1">Overview of your store performance</p>
+</div>
+
+<!-- Stats Cards -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+
+  <!-- Total Users -->
+  <div class="bg-white rounded-xl shadow p-6">
+    <p class="text-sm text-gray-500">Total Users</p>
+    <p class="text-3xl font-bold text-gray-800 mt-2">
+      {{.TotalUsers}}
+    </p>
+  </div>
+
+  <!-- Total Orders -->
+  <div class="bg-white rounded-xl shadow p-6">
+    <p class="text-sm text-gray-500">Total Orders</p>
+    <p class="text-3xl font-bold text-gray-800 mt-2">
+      {{.TotalOrders}}
+    </p>
+  </div>
+
+  <!-- Revenue -->
+  <div class="bg-white rounded-xl shadow p-6">
+    <p class="text-sm text-gray-500">Total Revenue</p>
+    <p class="text-3xl font-bold text-gray-800 mt-2">
+      ₹{{printf "%.2f" .TotalRevenue}}
+    </p>
+  </div>
+
+  <!-- Products -->
+  <div class="bg-white rounded-xl shadow p-6">
+    <p class="text-sm text-gray-500">Products</p>
+    <p class="text-3xl font-bold text-gray-800 mt-2">
+      {{.TotalProducts}}
+    </p>
+  </div>
+
+</div>
+
+<!-- Sales Chart -->
+<div class="bg-white rounded-xl shadow p-6 mb-10">
+  <h2 class="text-xl font-semibold text-gray-800 mb-4">
+    Sales (Last 7 Days)
+  </h2>
+  <canvas id="salesChart" height="110"></canvas>
+</div>
+
+<script id="sales-data" type="application/json">
+  {{.SalesJSON}}
+</script>
+
+
+<script>
+  const salesData = JSON.parse(
+    document.getElementById("sales-data").textContent
+  );
+
+  const labels = salesData.map(item => item.Date);
+  const values = salesData.map(item => item.Total);
+
+  const ctx = document.getElementById("salesChart").getContext("2d");
+
+  new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: labels,
+      datasets: [{
+        label: "Revenue (₹)",
+        data: values,
+        fill: true,
+        tension: 0.35,
+        backgroundColor: "rgba(34,197,94,0.15)",
+        borderColor: "#22c55e",
+        borderWidth: 2,
+        pointRadius: 4,
+        pointBackgroundColor: "#22c55e"
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        y: { beginAtZero: true }
+      }
+    }
+  });
+</script>
+
+
+<!-- Recent Orders -->
+<div class="bg-white rounded-xl shadow overflow-hidden">
+  <div class="p-6 border-b">
+    <h2 class="text-xl font-semibold text-gray-800">Recent Orders</h2>
+  </div>
+
+  <table class="min-w-full text-sm">
+    <thead class="bg-gray-100 text-gray-600">
+      <tr>
+        <th class="px-6 py-3 text-left">Order ID</th>
+        <th class="px-6 py-3 text-left">User</th>
+        <th class="px-6 py-3 text-left">Total</th>
+        <th class="px-6 py-3 text-left">Status</th>
+        <th class="px-6 py-3 text-left">Date</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{range .RecentOrders}}
+      <tr class="border-t">
+        <td class="px-6 py-4">#{{.ID}}</td>
+        <td class="px-6 py-4">{{.User.Email}}</td>
+        <td class="px-6 py-4">₹{{printf "%.2f" .TotalAmount}}</td>
+        <td class="px-6 py-4">
+          <span class="px-3 py-1 rounded-full text-xs
+            {{if eq .Status "pending"}}bg-yellow-100 text-yellow-700{{end}}
+            {{if eq .Status "paid"}}bg-blue-100 text-blue-700{{end}}
+            {{if eq .Status "shipped"}}bg-purple-100 text-purple-700{{end}}
+            {{if eq .Status "delivered"}}bg-green-100 text-green-700{{end}}
+            {{if eq .Status "cancelled"}}bg-red-100 text-red-700{{end}}">
+            {{.Status}}
+          </span>
+        </td>
+        <td class="px-6 py-4">
+          {{.CreatedAt.Format "02 Jan 2006"}}
+        </td>
+      </tr>
+      {{else}}
+      <tr>
+        <td colspan="5" class="px-6 py-6 text-center text-gray-500">
+          No recent orders
+        </td>
+      </tr>
+      {{end}}
+    </tbody>
+  </table>
+</div>
 
 {{end}}
