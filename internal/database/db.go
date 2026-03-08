@@ -54,13 +54,21 @@ func Migrate() {
 }
 
 func SeedAdmin(db *gorm.DB) {
-	hash, _ := bcrypt.GenerateFromPassword([]byte("0000"), bcrypt.DefaultCost)
-	db.FirstOrCreate(&models.User{
-		Username:  "superadmin",
-		Email:     "admin@sneacave.com",
-		Password:  string(hash),
-		Role:      "admin",
-		Status:    "active",
-		IsBlocked: false,
-	}, models.User{Email: "admin@sneacave.com"})
+    email := os.Getenv("ADMIN_EMAIL")
+    password := os.Getenv("ADMIN_PASSWORD")
+
+    if email == "" || password == "" {
+        log.Println("Skipping admin seed: ADMIN_EMAIL or ADMIN_PASSWORD not set")
+        return
+    }
+
+    hash, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+    db.FirstOrCreate(&models.User{
+        Username:  "superadmin",
+        Email:     email,
+        Password:  string(hash),
+        Role:      "admin",
+        Status:    "active",
+        IsBlocked: false,
+    }, models.User{Email: email})
 }

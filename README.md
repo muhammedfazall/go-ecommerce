@@ -293,7 +293,7 @@ docker compose up --build
 
 The server starts on **http://localhost:8080**.
 Admin panel: **http://localhost:8080/admin/login**
-Default credentials: `admin@sneacave.com` / `0000`
+> Default admin credentials are set in `internal/database/db.go`. Change them before deploying.
 
 ### Useful Docker Commands
 
