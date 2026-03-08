@@ -1,0 +1,10 @@
+.env
+.git
+.gitignore
+README.md
+IMPLEMENTATION_PLAN.md
+WALKTHROUGH.md
+MISC.md
+*.md
+tmp/
+vendor/   

@@ -33,7 +33,6 @@ func Connect() {
 
 	DB = db
 	log.Println("Connected to PostgreSQL database")
-	SeedAdmin(db)
 }
 
 func Migrate() {
