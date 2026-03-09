@@ -77,7 +77,7 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	// generates token
+	// generates access token
 	accesstoken, err := utils.GenerateAccessToken(
 		user.ID,
 		user.Email,
@@ -85,17 +85,45 @@ func Login(c *gin.Context) {
 	)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "could not generate token",
+			"error": "could not generate access token",
 		})
 		return
 	}
 
-	// set token in cookies
+	// generate refresh token
+	refreshtoken, err := utils.GenerateRefreshToken()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "could not generate refresh token",
+		})
+		return
+	}
+
+	// store refresh token in Redis
+	if err := utils.StoreRefreshToken(user.ID, refreshtoken); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "could not store refresh token",
+		})
+		return
+	}
+
+	// set access token cookie (15 min)
 	c.SetCookie(
 		"access_token",
 		accesstoken,
-		3600,
+		int(utils.AccessTokenDuration.Seconds()),
 		"/",
+		"",
+		false,
+		true,
+	)
+
+	// set refresh token cookie (7 days, scoped to /auth/refresh)
+	c.SetCookie(
+		"refresh_token",
+		refreshtoken,
+		int(utils.RefreshTokenDuration.Seconds()),
+		"/auth/refresh",
 		"",
 		false,
 		true,
@@ -176,12 +204,40 @@ func AdminLogin(c *gin.Context) {
 		return
 	}
 
-	// Set token in cookies
+	// Generate refresh token
+	refreshtoken, err := utils.GenerateRefreshToken()
+	if err != nil {
+		c.HTML(http.StatusInternalServerError, "login.html", gin.H{
+			"Error": "Could not login. Please try again.",
+		})
+		return
+	}
+
+	// Store refresh token in Redis
+	if err := utils.StoreRefreshToken(admin.ID, refreshtoken); err != nil {
+		c.HTML(http.StatusInternalServerError, "login.html", gin.H{
+			"Error": "Could not login. Please try again.",
+		})
+		return
+	}
+
+	// Set access token cookie (15 min)
 	c.SetCookie(
 		"access_token",
 		accesstoken,
-		3600,
+		int(utils.AccessTokenDuration.Seconds()),
 		"/",
+		"",
+		false,
+		true,
+	)
+
+	// Set refresh token cookie (7 days)
+	c.SetCookie(
+		"refresh_token",
+		refreshtoken,
+		int(utils.RefreshTokenDuration.Seconds()),
+		"/auth/refresh",
 		"",
 		false,
 		true,

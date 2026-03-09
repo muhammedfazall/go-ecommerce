@@ -1,12 +1,17 @@
 package controllers
 
 import (
+	"crypto/sha256"
+	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/muhammedfazall/go-ecommerce/internal/cache"
 	"github.com/muhammedfazall/go-ecommerce/internal/database"
 	"github.com/muhammedfazall/go-ecommerce/internal/helpers"
 	"github.com/muhammedfazall/go-ecommerce/internal/models"
+	utils "github.com/muhammedfazall/go-ecommerce/utils/jwt"
 )
 
 // get admin profile
@@ -50,7 +55,7 @@ func GetAdmins(c *gin.Context) {
 
 // Edit
 func EditAdminProfile(c *gin.Context) {
-	adminID, _ := c.Get("admin_id")
+	adminID, _ := c.Get("user_id")
 
 	var admin models.User
 	database.DB.First(&admin, adminID)
@@ -60,9 +65,8 @@ func EditAdminProfile(c *gin.Context) {
 	})
 }
 
-
 func UpdateAdminProfile(c *gin.Context) {
-	adminID, _ := c.Get("admin_id")
+	adminID, _ := c.Get("user_id")
 
 	username := c.PostForm("username")
 	email := c.PostForm("email")
@@ -81,7 +85,6 @@ func UpdateAdminProfile(c *gin.Context) {
 		return
 	}
 
-
 	admin.Username = username
 	admin.Email = email
 
@@ -96,14 +99,12 @@ func UpdateAdminProfile(c *gin.Context) {
 	c.Redirect(http.StatusFound, "/admin/profile")
 }
 
-
 func AdminChangePasswordPage(c *gin.Context) {
 	c.HTML(http.StatusOK, "admin_change_password.html", nil)
 }
 
-
 func AdminChangePassword(c *gin.Context) {
-	adminID, _ := c.Get("admin_id")
+	adminID, _ := c.Get("user_id")
 
 	currentPassword := c.PostForm("current_password")
 	newPassword := c.PostForm("new_password")
@@ -135,8 +136,21 @@ func AdminChangePassword(c *gin.Context) {
 	c.Redirect(http.StatusFound, "/admin/profile")
 }
 
-
 func AdminLogout(c *gin.Context) {
+	// Blacklist the token in Redis so it can't be reused
+	tokenString, exists := c.Get("token_string")
+	if exists && tokenString != "" {
+		tokenHash := fmt.Sprintf("%x", sha256.Sum256([]byte(tokenString.(string))))
+		cache.Client.Set(cache.Ctx, "blacklist:"+tokenHash, "1", 60*time.Minute)
+	}
+
+	// Delete refresh token from Redis
+	userID, exists := c.Get("user_id")
+	if exists {
+		utils.DeleteRefreshToken(userID.(uint))
+	}
+
+	// Clear the cookie
 	c.SetCookie(
 		"access_token",
 		"",
@@ -147,6 +161,16 @@ func AdminLogout(c *gin.Context) {
 		true,
 	)
 
+	// Clear the refresh token cookie
+	c.SetCookie(
+		"refresh_token",
+		"",
+		-1,
+		"/auth/refresh",
+		"",
+		false,
+		true,
+	)
+
 	c.Redirect(http.StatusFound, "/admin/login")
 }
-
