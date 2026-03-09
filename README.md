@@ -16,7 +16,6 @@ Designed around a sneaker marketplace theme, the architecture is generic enough 
 - [Admin Panel](#-admin-panel)
 - [Authentication & Security](#-authentication--security)
 - [Getting Started](#-getting-started)
-- [Docker Setup](#-docker-setup-recommended)
 - [Environment Variables](#-environment-variables)
 - [Current Status & Known Gaps](#-current-status--known-gaps)
 
@@ -272,76 +271,93 @@ The admin panel is a **server-side rendered** interface using Go's `html/templat
 
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running
 
-That's it. Docker handles Go, PostgreSQL, and Redis for you.
-
 ---
 
-## 🐳 Docker Setup (Recommended)
+### 1. Clone the repository
 
 ```bash
-# 1. Clone the repository
 git clone https://github.com/muhammedfazall/go-ecommerce.git
 cd go-ecommerce
-
-# 2. Create your .env file
-cp .env.example .env
-# Edit .env and fill in your values (see Environment Variables below)
-
-# 3. Start the entire stack (app + PostgreSQL + Redis)
-docker compose up --build
 ```
 
-The server starts on **http://localhost:8080**.
-Admin panel: **http://localhost:8080/admin/login**
-> Default admin credentials are set in `internal/database/db.go`. Change them before deploying.
+### 2. Set up environment variables
+
+```bash
+cp .env.example .env
+```
+
+Open `.env` and fill in your values — at minimum set `JWT_SECRET`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD`.
+
+> Generate a strong JWT secret: `openssl rand -hex 32`
+
+### 3. Start the stack
+
+```bash
+docker compose up --build -d
+```
+
+This starts the Go app, PostgreSQL, and Redis together. The app will be available at **http://localhost:8080**.
+
+### 4. Seed the database
+
+On first run the database is empty. Run the seed file to populate categories, products, users, orders, carts, and wishlists:
+
+**Mac/Linux:**
+```bash
+cat scripts/seed_all.sql | docker compose exec -T postgres psql -U sneacave_user -d sneacave_db
+```
+
+**Windows (PowerShell):**
+```powershell
+Get-Content scripts/seed_all.sql | docker compose exec -T postgres psql -U sneacave_user -d sneacave_db
+```
+
+This inserts:
+- 5 categories
+- 100 sneaker products
+- 10 sample users (password: `password123`)
+- Sample carts, cart items, wishlists, orders, and order items
+
+### 5. Log in to the admin panel
+
+Visit **http://localhost:8080/admin/login**
+
+Use the credentials you set in `.env` via `ADMIN_EMAIL` and `ADMIN_PASSWORD`.
+
+---
 
 ### Useful Docker Commands
 
 ```bash
-# Run in background
-docker compose up --build -d
+# Start all services in background
+docker compose up -d
 
-# View logs
+# View live app logs
 docker compose logs -f app
 
 # Stop all services
 docker compose down
 
-# Stop and wipe the database
+# Stop and wipe the database (clean slate)
 docker compose down -v
 
 # Rebuild after code changes
-docker compose up --build app
+docker compose up --build -d
 ```
 
 ---
 
-## Manual Setup (Without Docker)
+### Sample User Accounts (after seeding)
 
-### Prerequisites
+| Email                | Password      | Status   |
+| -------------------- | ------------- | -------- |
+| john@example.com     | password123   | Active   |
+| jane@example.com     | password123   | Active   |
+| mike@example.com     | password123   | Active   |
+| sarah@example.com    | password123   | Active   |
+| chris@example.com    | password123   | Blocked  |
 
-- Go 1.25+
-- PostgreSQL running on `localhost:5432`
-- Redis running on `localhost:6379`
-
-```bash
-# 1. Clone the repository
-git clone https://github.com/muhammedfazall/go-ecommerce.git
-cd go-ecommerce
-
-# 2. Create .env file and fill in your values
-cp .env.example .env
-
-# 3. Create the database
-psql -U postgres -c "CREATE USER sneacave_user WITH PASSWORD 'passsneacave';"
-psql -U postgres -c "CREATE DATABASE sneacave_db OWNER sneacave_user;"
-
-# 4. Install dependencies
-go mod download
-
-# 5. Run the server
-go run cmd/server/main.go
-```
+> ⚠️ These are for development only. Never use weak passwords in production.
 
 ---
 
