@@ -8,6 +8,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/muhammedfazall/go-ecommerce/internal/cache"
+	"github.com/muhammedfazall/go-ecommerce/internal/database"
+	"github.com/muhammedfazall/go-ecommerce/internal/models"
 	utils "github.com/muhammedfazall/go-ecommerce/utils/jwt"
 )
 
@@ -67,6 +69,29 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 		userID := uint(userIDFloat)
+
+		// Check user is verified and active
+		var user models.User
+		if err := database.DB.First(&user, userID).Error; err != nil {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"error": "user not found",
+			})
+			return
+		}
+
+		if !user.IsVerified {
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+				"error": "email not verified, please verify your email first",
+			})
+			return
+		}
+
+		if user.IsBlocked {
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+				"error": "account is blocked",
+			})
+			return
+		}
 
 		// Store token string for logout blacklisting
 		c.Set("token_string", tokenString)

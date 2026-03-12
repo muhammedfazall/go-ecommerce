@@ -43,6 +43,8 @@ func RegisterRoutes(r *gin.Engine) {
 		auth.POST("/login", controllers.Login)
 		auth.POST("/logout", controllers.Logout)
 		auth.POST("/refresh", controllers.RefreshToken)
+		auth.POST("/verify-otp", controllers.VerifyOTP)
+		auth.POST("/resend-otp", controllers.ResendOTP)
 	}
 
 	// --------------------

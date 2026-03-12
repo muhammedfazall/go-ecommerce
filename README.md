@@ -414,8 +414,3 @@ docker compose up --build -d
 | **Soft Delete**   | GORM soft delete is active but product listing doesn't filter `is_active`|
 | **Error Handling**| Direct DB errors sometimes leak to API responses                         |
 
----
-
-## 📄 License
-
-This project is open source and available under the [MIT License](LICENSE).

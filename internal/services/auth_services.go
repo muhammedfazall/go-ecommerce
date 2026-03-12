@@ -28,11 +28,13 @@ func RegisterUser(username, email, password string) error {
 	}
 
 	user := models.User{
-		Username:     username,
+		Username: username,
 		Email:    email,
 		Password: hashedPassword,
+		Status:     "pending",
+		IsVerified: false,
 	}
-
+	
 	return database.DB.Create(&user).Error
 }
 
@@ -55,8 +57,13 @@ func LoginUser(email, password string) (*models.User, error) {
 		return nil, errors.New("account is blocked")
 	}
 
+	if !user.IsVerified {
+		return nil, errors.New("email not verified, please check your inbox")
+	}
+
 	if user.Status != "active" {
 		return nil, errors.New("account is not active")
 	}
+	
 	return &user, nil
 }
