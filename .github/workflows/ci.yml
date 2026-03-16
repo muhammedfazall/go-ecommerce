@@ -67,7 +67,7 @@ jobs:
           context: .
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/sneacave:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/sneacave:${{ github.sha }}
+            muhammedfazall/sneacave:latest
+            muhammedfazall/sneacave:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
