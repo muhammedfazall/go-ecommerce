@@ -28,6 +28,9 @@ func RegisterRoutes(r *gin.Engine) {
 
 	r.HTMLRender = createMyRender("templates")
 
+	r.GET("/health",func(ctx *gin.Context) {
+		ctx.JSON(200,gin.H{"status":"ok"})
+	})
 	r.GET("/collections", controllers.AllProducts)
 	r.GET("/products/:id", controllers.ProductDetails)
 	r.GET("/categories", controllers.Categories)

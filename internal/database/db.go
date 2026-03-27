@@ -70,5 +70,6 @@ func SeedAdmin(db *gorm.DB) {
         Role:      "admin",
         Status:    "active",
         IsBlocked: false,
+		IsVerified: true,
     }, models.User{Email: email})
 }
