@@ -15,6 +15,8 @@ Designed around a sneaker marketplace theme, the architecture is generic enough 
 - [API Reference](#-api-reference)
 - [Admin Panel](#-admin-panel)
 - [Authentication & Security](#-authentication--security)
+- [Email & OTP Verification](#-email--otp-verification)
+- [CI/CD Pipeline](#-cicd-pipeline)
 - [Getting Started](#-getting-started)
 - [Environment Variables](#-environment-variables)
 - [Current Status & Known Gaps](#-current-status--known-gaps)
@@ -29,14 +31,16 @@ Designed around a sneaker marketplace theme, the architecture is generic enough 
 | Web Framework   | [Gin](https://github.com/gin-gonic/gin) v1.11                     |
 | ORM             | [GORM](https://gorm.io/) v1.31 with PostgreSQL driver             |
 | Database        | PostgreSQL 16                                                     |
-| Cache           | Redis 7                                                           |
-| Authentication  | JWT (HS256, 60-min expiry) via `golang-jwt/jwt/v5`                |
+| Cache / Store   | Redis 7 (refresh tokens, OTP storage, token blacklisting)         |
+| Authentication  | JWT (HS256) — 15-min access token + 7-day refresh token           |
 | Password Hash   | bcrypt (`golang.org/x/crypto`)                                    |
+| Email           | SMTP via [`gomail.v2`](https://pkg.go.dev/gopkg.in/gomail.v2)     |
 | CORS            | `gin-contrib/cors`                                                |
 | Template Engine | `gin-contrib/multitemplate` (admin HTML pages)                    |
 | Charts          | Chart.js (embedded in admin dashboard template)                   |
 | Config          | `.env` via `godotenv`                                             |
 | Containerization| Docker + Docker Compose                                           |
+| CI/CD           | GitHub Actions (test → build → push to Docker Hub)                |
 
 ---
 
@@ -48,17 +52,20 @@ The project follows a **clean layered architecture** inspired by Go community be
 cmd/server/main.go          → Application entry point
 config/                     → Environment config loader
 internal/
+  ├── cache/                → Redis client connection
   ├── database/             → DB connection, auto-migration, admin seeding
+  ├── email/                → SMTP email service (welcome + OTP emails)
   ├── models/               → GORM model definitions (8 models)
-  ├── controllers/          → HTTP handlers (14 controller files)
+  ├── controllers/          → HTTP handlers (15 controller files)
   ├── services/             → Business logic (auth service)
-  ├── middlewares/          → JWT auth + admin role guard
+  ├── middlewares/           → JWT auth + blacklist check + admin role guard
   ├── helpers/              → Password hashing utilities
   └── routes/               → Centralized route registration
 utils/
-  ├── jwt/                  → JWT generation & validation
-  └── otp/                  → (reserved for future OTP)
+  ├── jwt/                  → JWT access + refresh token lifecycle (Redis-backed)
+  └── otp/                  → OTP generation, Redis storage & verification
 templates/                  → Server-rendered admin panel (15 HTML files)
+.github/workflows/ci.yml   → CI/CD pipeline
 ```
 
 **Key design decisions:**
@@ -68,6 +75,8 @@ templates/                  → Server-rendered admin panel (15 HTML files)
 - **Auto-migration on startup** — `database.Migrate()` keeps the schema in sync
 - **Seed admin** — `SeedAdmin()` creates a default `superadmin` user on first run
 - **Dual API surface** — JSON REST APIs for users/frontend + server-rendered HTML for admin panel
+- **Redis as active infrastructure** — used for refresh token storage, OTP TTL, and access token blacklisting
+- **Two-phase registration** — users register with `pending` status, then verify email via OTP to activate
 
 ---
 
@@ -93,6 +102,7 @@ erDiagram
         string Role
         string Status
         bool   IsBlocked
+        bool   IsVerified
     }
     SNEAKER {
         uint    ID
@@ -145,6 +155,7 @@ erDiagram
 - `Wishlist` uses a composite unique index `(UserID, SneakerID)` to prevent duplicates
 - `OrderItem` and `CartItem` cascade-delete when their parent is removed
 - All models embed `gorm.Model` (provides `ID`, `CreatedAt`, `UpdatedAt`, `DeletedAt` with soft delete)
+- `User.IsVerified` tracks email verification status; new users default to `Status: "pending"`, `IsVerified: false`
 
 ---
 
@@ -154,6 +165,7 @@ erDiagram
 
 | Method | Path                       | Description                                          |
 | ------ | -------------------------- | ---------------------------------------------------- |
+| GET    | `/health`                  | Health check (returns `{"status":"ok"}`)             |
 | GET    | `/collections`             | List all products (paginated, filterable, sortable)  |
 | GET    | `/products/:id`            | Product details                                      |
 | GET    | `/categories`              | List all categories                                  |
@@ -162,11 +174,14 @@ erDiagram
 
 ### Auth Endpoints
 
-| Method | Path             | Description                                              |
-| ------ | ---------------- | -------------------------------------------------------- |
-| POST   | `/auth/register` | Register new user (JSON: username, email, password)      |
-| POST   | `/auth/login`    | Login (JSON: email, password) → JWT cookie + token       |
-| POST   | `/auth/logout`   | Logout (clears cookie)                                   |
+| Method | Path               | Description                                                      |
+| ------ | ------------------ | ---------------------------------------------------------------- |
+| POST   | `/auth/register`   | Register new user → sends OTP email for verification             |
+| POST   | `/auth/verify-otp` | Verify OTP → activates account + sends welcome email             |
+| POST   | `/auth/resend-otp` | Resend a fresh OTP to the user's email                           |
+| POST   | `/auth/login`      | Login → returns access token (cookie) + refresh token (cookie)   |
+| POST   | `/auth/logout`     | Logout — blacklists access token, deletes refresh token in Redis |
+| POST   | `/auth/refresh`    | Refresh access token using refresh token (with rotation)         |
 
 ### User-Protected Endpoints (JWT Required)
 
@@ -252,16 +267,54 @@ The admin panel is a **server-side rendered** interface using Go's `html/templat
 
 ## 🔐 Authentication & Security
 
-| Feature          | Implementation                                                          |
-| ---------------- | ----------------------------------------------------------------------- |
-| Password Storage | bcrypt hash with default cost                                           |
-| Token Format     | JWT (HS256) with `user_id`, `email`, `role` claims                      |
-| Token Expiry     | 60 minutes                                                              |
-| Token Delivery   | HTTP-only cookie (`access_token`) + JSON response body                  |
-| Auth Middleware  | Reads cookie first, falls back to `Authorization: Bearer` header        |
-| Admin Guard      | Stacked middleware: `AuthMiddleware()` → `AdminMiddleware()`            |
-| Blocked Users    | Checked at login time — blocked users cannot authenticate               |
-| CORS             | Configured for `http://127.0.0.1:5500` (dev frontend)                  |
+| Feature                | Implementation                                                                     |
+| ---------------------- | ---------------------------------------------------------------------------------- |
+| Password Storage       | bcrypt hash with default cost                                                      |
+| Access Token           | JWT (HS256) with `user_id`, `email`, `role` claims — **15-minute** expiry          |
+| Refresh Token          | Cryptographically random 256-bit string — **7-day** expiry, stored in Redis        |
+| Token Rotation         | On refresh, old token is replaced — one active refresh token per user              |
+| Token Delivery         | HTTP-only cookies (`access_token` scoped to `/`, `refresh_token` scoped to `/auth/refresh`) |
+| Token Blacklisting     | On logout, access token SHA-256 hash is stored in Redis (TTL = token lifetime)     |
+| Auth Middleware        | Reads cookie first, falls back to `Authorization: Bearer` header; checks blacklist |
+| Verification Guard     | Middleware rejects requests from unverified (`IsVerified: false`) users             |
+| Admin Guard            | Stacked middleware: `AuthMiddleware()` → `AdminMiddleware()`                       |
+| Blocked Users          | Checked both at login and per-request via middleware                                |
+| Constant-Time Compare  | Refresh token validation uses `crypto/subtle.ConstantTimeCompare`                  |
+| CORS                   | Configured for `http://127.0.0.1:5500` (dev frontend)                             |
+
+---
+
+## 📧 Email & OTP Verification
+
+The platform implements a **two-phase registration** flow:
+
+1. **Register** → User created with `status: "pending"`, `is_verified: false`
+2. **OTP Sent** → A 6-digit OTP is generated securely (`crypto/rand`), stored in Redis with a **5-minute TTL**, and emailed via SMTP
+3. **Verify OTP** → On successful verification, user is activated (`status: "active"`, `is_verified: true`) and a welcome email is sent (non-blocking, via goroutine)
+4. **Resend OTP** → Available for users who haven't verified yet
+
+**Email Templates:**
+- **OTP verification email** — Contains the 6-digit code with expiry notice
+- **Welcome email** — Sent after successful verification
+
+**SMTP Configuration:** Uses `gomail.v2` with configurable SMTP host, port, credentials, and sender address via environment variables.
+
+---
+
+## 🔄 CI/CD Pipeline
+
+The project uses **GitHub Actions** (`.github/workflows/ci.yml`) with two jobs:
+
+### Test Job (on every push & PR to `main`)
+- Spins up PostgreSQL 16 and Redis 7 as service containers
+- Sets up Go 1.25 with module caching
+- Runs `go test ./... -v -coverprofile=coverage.out`
+- Uploads coverage to Codecov
+
+### Build & Push Job (on push to `main` only, after tests pass)
+- Builds the Docker image using Docker Buildx
+- Pushes to Docker Hub as `muhammedfazall/sneacave:latest` and `muhammedfazall/sneacave:<commit-sha>`
+- Uses GitHub Actions cache for Docker layer caching
 
 ---
 
@@ -286,7 +339,7 @@ cd go-ecommerce
 cp .env.example .env
 ```
 
-Open `.env` and fill in your values — at minimum set `JWT_SECRET`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD`.
+Open `.env` and fill in your values — at minimum set `JWT_SECRET`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`, and the SMTP credentials for email functionality.
 
 > Generate a strong JWT secret: `openssl rand -hex 32`
 
@@ -298,7 +351,14 @@ docker compose up --build -d
 
 This starts the Go app, PostgreSQL, and Redis together. The app will be available at **http://localhost:8080**.
 
-### 4. Seed the database
+### 4. Verify the stack is healthy
+
+```bash
+curl http://localhost:8080/health
+# → {"status":"ok"}
+```
+
+### 5. Seed the database
 
 On first run the database is empty. Run the seed file to populate categories, products, users, orders, carts, and wishlists:
 
@@ -318,7 +378,7 @@ This inserts:
 - 10 sample users (password: `password123`)
 - Sample carts, cart items, wishlists, orders, and order items
 
-### 5. Log in to the admin panel
+### 6. Log in to the admin panel
 
 Visit **http://localhost:8080/admin/login**
 
@@ -326,23 +386,146 @@ Use the credentials you set in `.env` via `ADMIN_EMAIL` and `ADMIN_PASSWORD`.
 
 ---
 
-### Useful Docker Commands
+### 📋 Useful Commands
+
+#### Docker
 
 ```bash
 # Start all services in background
 docker compose up -d
 
+# Start with a fresh build
+docker compose up --build -d
+
 # View live app logs
 docker compose logs -f app
+
+# View logs for a specific service
+docker compose logs -f postgres
+docker compose logs -f redis
 
 # Stop all services
 docker compose down
 
-# Stop and wipe the database (clean slate)
+# Stop and wipe all data (clean slate)
 docker compose down -v
 
-# Rebuild after code changes
-docker compose up --build -d
+# Restart just the app (after code changes)
+docker compose up --build -d app
+
+# Check running containers
+docker compose ps
+
+# Shell into the app container
+docker compose exec app sh
+```
+
+#### Go (local development without Docker)
+
+```bash
+# Run the server locally
+go run ./cmd/server
+
+# Download dependencies
+go mod download
+
+# Tidy up go.mod / go.sum
+go mod tidy
+
+# Run all tests
+go test ./... -v
+
+# Run tests with coverage
+go test ./... -v -coverprofile=coverage.out
+go tool cover -html=coverage.out
+
+# Build the binary
+go build -o server ./cmd/server
+
+# Vet and lint
+go vet ./...
+```
+
+#### Database (PostgreSQL)
+
+```bash
+# Open a psql shell inside the container
+docker compose exec postgres psql -U sneacave_user -d sneacave_db
+
+# Run the seed file (Mac/Linux)
+cat scripts/seed_all.sql | docker compose exec -T postgres psql -U sneacave_user -d sneacave_db
+
+# Run the seed file (Windows PowerShell)
+Get-Content scripts/seed_all.sql | docker compose exec -T postgres psql -U sneacave_user -d sneacave_db
+
+# List all tables
+docker compose exec postgres psql -U sneacave_user -d sneacave_db -c "\dt"
+
+# Quick row counts
+docker compose exec postgres psql -U sneacave_user -d sneacave_db -c "SELECT 'users' AS t, COUNT(*) FROM users UNION ALL SELECT 'sneakers', COUNT(*) FROM sneakers UNION ALL SELECT 'orders', COUNT(*) FROM orders;"
+
+# Dump the database
+docker compose exec postgres pg_dump -U sneacave_user sneacave_db > backup.sql
+```
+
+#### Redis
+
+```bash
+# Open a Redis CLI shell
+docker compose exec redis redis-cli
+
+# List all keys
+docker compose exec redis redis-cli KEYS "*"
+
+# Check stored refresh tokens
+docker compose exec redis redis-cli KEYS "refresh:*"
+
+# Check stored OTPs
+docker compose exec redis redis-cli KEYS "otp:*"
+
+# Check blacklisted tokens
+docker compose exec redis redis-cli KEYS "blacklist:*"
+
+# Flush all Redis data
+docker compose exec redis redis-cli FLUSHALL
+```
+
+#### API Testing (curl)
+
+```bash
+# Health check
+curl http://localhost:8080/health
+
+# Register a new user
+curl -X POST http://localhost:8080/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"username":"testuser","email":"test@example.com","password":"securepass123"}'
+
+# Verify OTP
+curl -X POST http://localhost:8080/auth/verify-otp \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@example.com","otp":"123456"}'
+
+# Login (saves cookies to cookiejar)
+curl -X POST http://localhost:8080/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@example.com","password":"securepass123"}' \
+  -c cookies.txt
+
+# Access a protected endpoint (using saved cookies)
+curl http://localhost:8080/user/profile -b cookies.txt
+
+# Refresh token
+curl -X POST http://localhost:8080/auth/refresh -b cookies.txt -c cookies.txt
+
+# Browse products
+curl "http://localhost:8080/collections?page=1&limit=10"
+
+# Search products
+curl "http://localhost:8080/products/search?q=nike"
+
+# Logout
+curl -X POST http://localhost:8080/auth/logout -b cookies.txt
 ```
 
 ---
@@ -375,6 +558,13 @@ docker compose up --build -d
 | `REDIS_ADDR`     | Redis address            | `redis:6379`    |
 | `REDIS_PASSWORD` | Redis password           | *(empty)*       |
 | `REDIS_DB`       | Redis DB index           | `0`             |
+| `ADMIN_EMAIL`    | Default admin email      | —               |
+| `ADMIN_PASSWORD` | Default admin password   | —               |
+| `SMTP_HOST`      | SMTP server host         | —               |
+| `SMTP_PORT`      | SMTP server port         | —               |
+| `SMTP_USER`      | SMTP auth username       | —               |
+| `SMTP_PASSWORD`  | SMTP auth password       | —               |
+| `SMTP_FROM`      | Sender address for emails| —               |
 
 > Generate a strong JWT secret: `openssl rand -hex 32`
 
@@ -384,7 +574,12 @@ docker compose up --build -d
 
 ### ✅ What's Working
 
-- Complete user authentication flow (register, login, logout)
+- Complete user authentication flow (register → OTP verify → login → refresh → logout)
+- **Email verification via OTP** — 6-digit OTP with 5-min Redis TTL, resend support
+- **Welcome email** on successful verification (non-blocking)
+- **JWT refresh token system** — 15-min access token + 7-day refresh token with rotation
+- **Token blacklisting** — logout invalidates access tokens via Redis
+- **Redis actively used** — refresh token storage, OTP TTL, token blacklisting
 - Full product catalog with pagination, filtering, sorting, and search
 - Shopping cart (add, view, update quantity, remove, clear)
 - Order placement with **database transactions** and **row-level locking** for stock validation
@@ -394,23 +589,20 @@ docker compose up --build -d
 - JWT-based auth with cookie and header support
 - CORS configured for frontend integration
 - **Fully containerized with Docker + Docker Compose** (one-command setup)
+- **CI/CD pipeline** via GitHub Actions (test → build → push Docker image)
+- **Health check endpoint** (`GET /health`)
 
 ### 🔴 Known Gaps & Planned Improvements
 
 | Area              | Issue                                                                    |
 | ----------------- | ------------------------------------------------------------------------ |
-| **OTP**           | `utils/otp/` directory exists but is empty — no implementation           |
 | **Payment**       | Payment is **mocked** (fake payment ID, manual success/fail flag)        |
-| **Email**         | No email service — no signup confirmation, no OTP, no password reset     |
-| **Redis**         | Redis is running but not yet used for caching or session management      |
-| **CI/CD**         | No GitHub Actions or CI/CD pipeline                                      |
 | **Testing**       | No unit tests, integration tests, or test setup                          |
 | **Logging**       | Basic `log.Println` — no structured logging                              |
 | **Validation**    | Minimal input validation (no email format check, no password strength)   |
-| **Refresh Token** | No refresh token — users must re-login after 60 minutes                  |
 | **Rate Limiting** | No rate limiting on auth endpoints                                       |
 | **File Upload**   | Products use `ImageURL` string — no actual file upload support           |
 | **Pagination**    | No total count returned — frontend can't build page navigation           |
 | **Soft Delete**   | GORM soft delete is active but product listing doesn't filter `is_active`|
 | **Error Handling**| Direct DB errors sometimes leak to API responses                         |
-
+| **Password Reset**| No forgot-password / reset-password flow                                 |
